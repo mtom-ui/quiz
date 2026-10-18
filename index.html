@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.6.4">
+<meta name="app-version" content="0.7.1">
 <title>Gambled Knowledge</title>
 <link rel="icon" type="image/svg+xml" href="icons/logo.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -58,6 +58,10 @@
   .timer.low { animation: pulse 1s ease-in-out infinite; }
   @keyframes pulse { 50% { transform: scale(1.06); background: #e5634d; } }
   .q { font: 600 31px/1.14 var(--serif); margin: 0; letter-spacing: -.01em; }
+  .codebox { display: flex; gap: 8px; margin: 10px 0 0; }
+  .codebox span { width: 48px; height: 60px; border-radius: 14px; background: #ffffff14; border: 1.5px solid #ffffff2e; display: grid; place-items: center; font: 700 32px var(--serif); color: #fff; transition: background .15s; }
+  .codebox:active span { background: #ffffff26; }
+  .lobbyhero { padding-bottom: 28px; background: radial-gradient(140% 90% at 85% -10%, #f2b54424, transparent 60%); }
   .big { font: 700 46px/1 var(--serif); letter-spacing: .14em; margin: 10px 0 2px; }
   .sub { opacity: .75; font-size: 14px; }
 
@@ -122,14 +126,14 @@
   .progress .left { font-size: 14px; margin-top: 10px; }
 
   /* ---------- Avatare ---------- */
-  .av { --s: 44px; width: var(--s); height: calc(var(--s) * 1.4583); border-radius: calc(var(--s) * .2); background: var(--photo); overflow: hidden; position: relative; flex: none; display: block; }
+  .av { --s: 44px; width: var(--s); height: calc(var(--s) * 1.4535); border-radius: calc(var(--s) * .2); background: var(--photo); overflow: hidden; position: relative; flex: none; display: block; }
   .av img { position: absolute; width: 100%; left: 0; bottom: 0; display: block; }
   .av .ok { position: absolute; right: 4%; top: 4%; width: calc(var(--s) * .38); height: calc(var(--s) * .38); border-radius: 50%; background: var(--ok); color: #fff; font-size: calc(var(--s) * .24); display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
   .avwrap { position: relative; flex: none; }
-  .avfull { border-radius: 26px; background: var(--photo); overflow: hidden; aspect-ratio: 360 / 525; position: relative; }
+  .avfull { border-radius: 26px; background: var(--photo); overflow: hidden; aspect-ratio: 172 / 250; position: relative; }
   .avfull img { width: 100%; display: block; position: absolute; bottom: 0; left: 0; }
   .picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-  .pick { position: relative; aspect-ratio: 360 / 525; border-radius: 16px; padding: 0; border: 3px solid transparent; transition: transform .12s; }
+  .pick { position: relative; aspect-ratio: 172 / 250; border-radius: 16px; padding: 0; border: 3px solid transparent; transition: transform .12s; }
   .pick .av { width: 100%; height: 100%; border-radius: 11px; }
   .pick.on { border-color: var(--ink); transform: scale(1.06); box-shadow: 0 8px 18px -8px rgba(23,72,77,.7); }
   .pick.taken { opacity: .28; }
@@ -150,12 +154,13 @@
   .pos { color: var(--ok); } .neg { color: var(--bad); } .zero { color: var(--muted); }
   .zbadge { font-size: 11px; background: var(--seg-off); border-radius: 8px; padding: 1px 7px; margin-left: 6px; font-weight: 600; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .tile { text-align: center; position: relative; }
-  .tile .av { --s: 76px; margin: 0 auto; }
-  .tile .nm { font-weight: 600; font-size: 14px; line-height: 1.15; margin-top: 6px; overflow-wrap: anywhere; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .tile .st { font-size: 12px; color: var(--muted); }
-  .tile .st.ready { color: var(--ok); font-weight: 600; }
-  .tile .x { position: absolute; top: -4px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--bad); color: #fff; font-size: 14px; }
+  .tile { background: #fff; border: 1.5px solid var(--line); border-radius: 22px; padding: 8px 8px 12px; text-align: center; position: relative; box-shadow: 0 12px 24px -18px rgba(23,72,77,.6); transition: border-color .3s, box-shadow .3s; }
+  .tile.rdy { border-color: var(--ok); box-shadow: 0 14px 28px -16px rgba(43,122,91,.8); }
+  .tile .av { width: 100%; height: auto; aspect-ratio: 172 / 250; border-radius: 15px; margin: 0; }
+  .tile .nm { font-weight: 700; font-size: 14px; line-height: 1.15; margin-top: 8px; overflow-wrap: anywhere; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tile .st { display: inline-block; margin-top: 5px; padding: 2px 10px; border-radius: 99px; background: #f1ece6; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .tile .st.ready { background: var(--ok-bg); color: var(--ok); }
+  .tile .x { position: absolute; top: -7px; right: -5px; width: 26px; height: 26px; border-radius: 50%; background: var(--bad); color: #fff; font-size: 15px; box-shadow: 0 0 0 2px #fff; }
   .qr { background: #fff; border: 1.5px solid var(--line); border-radius: 22px; padding: 14px; text-align: center; }
   .qr svg { width: 200px; height: 200px; display: block; margin: 0 auto; }
   .qr .url { font-size: 12px; color: var(--muted); word-break: break-all; margin-top: 6px; }
@@ -169,6 +174,54 @@
   input.t, select.t { width: 100%; height: 54px; border-radius: 16px; border: 1.5px solid var(--line); padding: 0 16px; background: #fff; font-size: 18px; }
   input.t:focus, select.t:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 4px var(--sel); }
   input.code { text-transform: uppercase; letter-spacing: .3em; text-align: center; font: 700 30px var(--serif); }
+  /* Einrichtung (Admin) */
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mode { position: relative; border: 1.5px solid var(--line); border-radius: 22px; padding: 16px 10px 14px; text-align: center; background: #fff; transition: all .15s; }
+  .mode i { display: block; font-style: normal; font-size: 34px; margin-bottom: 4px; }
+  .mode b { display: block; font-size: 17px; }
+  .mode small { color: var(--muted); font-size: 13px; }
+  .mode.on { border-color: var(--ink); background: var(--sel); box-shadow: 0 12px 24px -14px rgba(23,72,77,.6); }
+  .mode.on::after { content: "✓"; position: absolute; top: 8px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 13px; display: grid; place-items: center; }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset { border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 4px; text-align: center; font-weight: 700; font-size: 15px; background: #fff; transition: all .15s; }
+  .preset small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .preset.on { border-color: var(--ink); background: var(--sel); }
+  .group { border: 1.5px solid var(--line); border-radius: 22px; padding: 4px 16px; }
+  .group > h3 { margin: 12px 0 0; font: 700 12px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .setrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .setrow:last-child { border-bottom: 0; }
+  .setrow .sl b { display: block; font-size: 16px; }
+  .setrow .sl small { color: var(--muted); font-size: 13px; }
+  .stp { display: flex; align-items: center; gap: 4px; flex: none; }
+  .stp button { width: 38px; height: 38px; border-radius: 50%; background: var(--sel); color: var(--ink); font-size: 22px; line-height: 1; display: grid; place-items: center; }
+  .stp button:active { transform: scale(.92); }
+  .stp output { min-width: 78px; text-align: center; font: 700 18px var(--serif); font-variant-numeric: tabular-nums; }
+  .stp output.chg { color: var(--coral); }
+  .swrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border: 1.5px solid var(--line); border-radius: 22px; padding: 14px 16px; text-align: left; background: #fff; }
+  .swrow b { display: block; font-size: 16px; }
+  .swrow small { color: var(--muted); font-size: 13px; }
+  .sw { position: relative; width: 52px; height: 30px; border-radius: 15px; background: #d8d2cb; transition: background .2s; flex: none; }
+  .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 2px 4px #0003; }
+  .sw.on { background: var(--ink); }
+  .sw.on::after { transform: translateX(22px); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: #f1ece6; border-radius: 14px; padding: 3px; margin: 12px 0; }
+  .seg button { border-radius: 11px; padding: 9px 4px; font-weight: 600; font-size: 14px; }
+  .seg button.on { background: #fff; box-shadow: 0 2px 6px #0002; }
+  details.more { border: 1.5px solid var(--line); border-radius: 22px; padding: 0 16px; }
+  details.more summary { padding: 14px 0; font-weight: 600; cursor: pointer; }
+  details.more .setrow:first-of-type { border-top: 0; }
+  .sumline { text-align: center; color: var(--muted); font-size: 14px; }
+  body.tv .chips.soft { justify-content: flex-start; gap: .8vw; }
+  body.tv .chips.soft .chip { border: 0; background: #f6f1ec; color: var(--muted); font-weight: 500; }
+  @media (min-width: 900px) {   /* Einrichtung auf großen Bildschirmen: zwei Spalten */
+    body.start .sheet.cr { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; align-content: center; align-items: start; padding-top: 36px; padding-bottom: 28px; }
+    body.start .screen.crs { max-width: 1240px; }
+    body.start .screen.crs .hero { flex: 0 0 29%; }
+    body.start .screen.crs .sheet { padding-left: 40px; padding-right: 40px; }
+    body.start .sheet.cr > * { max-width: none; }
+    body.start .sheet.cr > .full { grid-column: 1 / -1; }
+    body.start .sheet.cr .actions { margin-top: 0; }
+  }
   .seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .seg2 button { border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 10px; font-weight: 600; text-align: center; }
   .seg2 button.on { border-color: var(--ink); background: var(--sel); }
@@ -203,15 +256,16 @@
   body.tv .sheet { padding: 3vh 4vw 0; gap: 2.6vh; }
   body.tv .actions { margin: 0 -4vw; padding: 1.6vh 4vw 2.4vh; flex-direction: row; }
   body.tv .ans { font-size: clamp(22px, 2.6vw, 34px); min-height: 100px; border-radius: 26px; padding: 22px; }
-  body.tv .tiles { --tvk: 6; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tvk) * 1vw + 16px), 1fr)); gap: 2.2vh 1.4vw; }
-  body.tv .tile .av { --s: calc(var(--tvk) * 1vw); }
-  body.tv .tile .nm { font-size: clamp(12px, calc(var(--tvk) * .22vw), 28px); margin-top: 8px; -webkit-line-clamp: 3; }
-  body.tv .tile .st { font-size: clamp(14px, 1.1vw, 22px); }
+  body.tv .tiles { --tvk: 6; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tvk) * 1vw + 2.2vw), 1fr)); gap: 2vh 1.2vw; }
+  body.tv .tile { padding: .7vw .7vw 1vw; border-radius: 1.6vw; }
+  body.tv .tile .av { --s: calc(var(--tvk) * 1vw); width: var(--s); height: calc(var(--s) * 1.4535); aspect-ratio: auto; margin: 0 auto; border-radius: calc(var(--s) * .16); }
+  body.tv .tile .nm { font-size: clamp(12px, calc(var(--tvk) * .2vw), 28px); margin-top: .8vh; -webkit-line-clamp: 3; }
+  body.tv .tile .st { font-size: clamp(12px, .95vw, 20px); padding: 1px .7vw; margin-top: .5vh; }
   body.tv .tile .x { width: 34px; height: 34px; font-size: 20px; }
   body.tv .qr { padding: 22px; border-radius: 32px; }
   body.tv .qr svg { width: clamp(280px, min(24vw, 42vh), 560px); height: clamp(280px, min(24vw, 42vh), 560px); }
   body.tv .qr .url { font-size: clamp(14px, 1.1vw, 22px); margin-top: 12px; }
-  body.tv .big { font-size: clamp(64px, min(7vw, 12vh), 150px); margin: .5vh 0 0; }
+  body.tv .big { font-size: clamp(60px, min(5.6vw, 10vh), 130px); margin: .5vh 0 0; }
   body.tv .hero .sub { font-size: clamp(16px, 1.4vw, 28px); }
   body.tv .chip { font-size: clamp(15px, 1.2vw, 24px); padding: 8px 20px; }
   body.tv h3.f { font-size: clamp(15px, 1.2vw, 24px); }
@@ -257,6 +311,11 @@
   .howto li::before { counter-increment: h; content: counter(h); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--sel); color: var(--ink); font-weight: 700; font-size: 14px; display: grid; place-items: center; }
   .status { border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; background: #f6f1ec; font-size: 15px; }
   .status.ok { background: var(--ok-bg); }
+  .status > div { flex: 1; min-width: 0; }
+  .status .rbar { height: 6px; border-radius: 3px; background: #0000001a; margin-top: 10px; overflow: hidden; }
+  .status .rbar i { display: block; height: 100%; background: var(--ok); border-radius: 3px; transition: width .4s; }
+  body:not(.tv) .chips.soft { justify-content: center; gap: 6px; }
+  body:not(.tv) .chips.soft .chip { border: 0; background: #f6f1ec; font-weight: 500; font-size: 13px; color: var(--muted); }
   .status .ic { font-size: 24px; flex: none; }
   .status b { display: block; font-size: 16px; }
   details.invite { border: 1.5px solid var(--line); border-radius: 18px; padding: 0 14px; }
@@ -470,7 +529,7 @@ let S = null;           // öffentlicher Zustand
 let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
 const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
-let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false, tutOpen: false, tutStep: 0,
+let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: false, solo: false, tutOpen: false, tutStep: 0,
   menu: false, confirm: null, ask: null, reason: '', stake: 1, answer: null, joker: '', arm: '', sv: {}, takenNames: [] };
 let pool = null;
 let lastStatus = null, lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
@@ -495,6 +554,7 @@ const joinUrl = () => `${location.origin}${location.pathname}?code=${S ? S.code 
 const pl = id => (S && S.players.find(p => p.id === id)) || null;
 
 function toast(msg, err) {
+  if (err) buzz([30, 50, 30]);
   const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block';
   clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = 'none'), err ? 4500 : 3200);
 }
@@ -515,6 +575,7 @@ async function refresh(force) {
     offset = Date.parse(s.server_now) - Date.now();
     S = s; M = m;
     if (S.status !== lastStatus) { ui.ask = null; lastStatus = S.status; }
+    if (S.status === 'finished') noteRoundFinished();
     if (S.status === 'question_active' && S.question && lastQ !== S.question.sq_id) {
       lastQ = S.question.sq_id; ui.ask = null; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = ''; ui.menu = false;
       ui.stake = Math.min(1, maxStake());
@@ -613,6 +674,47 @@ const settingsFromForm = () => {
   return s;
 };
 let pendingSettings = {};
+/* Einrichtung: Stepper statt Zahlenfelder. Werte stehen in ui.sv (leer = Server-Standard). */
+const PRESETS = [{ name: 'Kurz', count: 5, secs: 30 }, { name: 'Standard', count: 10, secs: 45 }, { name: 'Lang', count: 20, secs: 45 }];
+const SETUP = {
+  s_count: { label: 'Fragen', hint: 'pro Runde', def: 10, min: 1, max: 50, step: 1 },
+  s_secs: { label: 'Zeit pro Frage', hint: 'in Sekunden', def: 45, min: 10, max: 120, step: 5, unit: ' s' },
+  s_pts: { label: 'Startpunkte', hint: 'damit startet jeder', def: 10, min: 1, max: 1000, step: v => (v < 20 ? 1 : v < 100 ? 5 : 25) },
+  s_max: { label: 'Max. Einsatz', hint: 'pro Frage', def: '', list: ['', 1, 2, 3, 5, 8, 10, 15, 20, 25, 50, 100, 0], fmt: v => (v === '' ? 'wie Start' : Number(v) === 0 ? 'unbegrenzt' : v) },
+  s_jpq: { label: 'Joker pro Frage', hint: 'höchstens', def: 1, min: 1, max: 4, step: 1 },
+  s_hsmin: { label: 'Han Solo ab', hint: 'Mindestspielerzahl', def: 3, min: 2, max: 15, step: 1, unit: ' Spieler' },
+  s_min: { label: 'Mindestpunkte', hint: 'tiefer fällt niemand', def: 1, min: 0, max: 50, step: 1, fmt: v => (Number(v) === 0 ? 'bis 0' : v) },
+  s_rt: { label: 'Automatisch weiter', hint: 'nach der Auflösung', def: '', list: ['', 15, 30, 45, 60, 90, 120], fmt: v => (v === '' ? 'aus' : v + ' s') },
+};
+const svCur = id => (ui.sv[id] === undefined || ui.sv[id] === '' ? SETUP[id].def : Number(ui.sv[id]));
+const svChanged = id => ui.sv[id] !== undefined && ui.sv[id] !== '' && String(ui.sv[id]) !== String(SETUP[id].def);
+const fmtSetup = id => { const c = SETUP[id], v = c.list ? (ui.sv[id] === undefined ? c.def : ui.sv[id]) : svCur(id); return c.fmt ? c.fmt(v) : v + (c.unit || ''); };
+const setupRow = id => { const c = SETUP[id]; return `<div class="setrow"><div class="sl"><b>${c.label}</b><small>${c.hint}</small></div><div class="stp"><button type="button" onclick="stepSet('${id}',-1)" aria-label="weniger">−</button><output id="sv_${id}" class="${svChanged(id) ? 'chg' : ''}">${fmtSetup(id)}</output><button type="button" onclick="stepSet('${id}',1)" aria-label="mehr">+</button></div></div>`; };
+function stepSet(id, dir) {
+  const c = SETUP[id];
+  if (c.list) {
+    const cur = ui.sv[id] === undefined ? c.def : ui.sv[id], i = c.list.map(String).indexOf(String(cur));
+    const next = c.list[Math.max(0, Math.min(c.list.length - 1, i + dir))];
+    ui.sv[id] = String(next);
+  } else {
+    const cur = svCur(id), st = typeof c.step === 'function' ? c.step(dir > 0 ? cur : cur - 1) : c.step;
+    ui.sv[id] = String(Math.max(c.min, Math.min(c.max, cur + dir * st)));
+  }
+  if (String(ui.sv[id]) === String(c.def)) delete ui.sv[id];
+  updateSetupDom();
+}
+function updateSetupDom() {
+  Object.keys(SETUP).forEach(id => { const o = $('#sv_' + id); if (o) { o.textContent = fmtSetup(id); o.classList.toggle('chg', svChanged(id)); } });
+  const n = svCur('s_count'), t = svCur('s_secs');
+  document.querySelectorAll('.preset').forEach(b => { const q = PRESETS[Number(b.dataset.p)]; b.classList.toggle('on', q.count === n && q.secs === t); });
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.o === (ui.sv.s_order === 'random' ? 'random' : 'ascending')));
+  const rs = $('#resetSetup'); if (rs) rs.hidden = !Object.keys(ui.sv).length;
+  const sl = $('#sumline'); if (sl) sl.textContent = `${n} Fragen · ${t} s pro Frage · ${svCur('s_pts')} Startpunkte`;
+}
+function setPreset(i) { const q = PRESETS[i]; ui.sv.s_count = String(q.count); ui.sv.s_secs = String(q.secs); ['s_count', 's_secs'].forEach(id => String(ui.sv[id]) === String(SETUP[id].def) && delete ui.sv[id]); updateSetupDom(); }
+function setOrder(v) { if (v === 'random') ui.sv.s_order = 'random'; else delete ui.sv.s_order; updateSetupDom(); }
+function toggleSolo() { ui.solo = !ui.solo; const sw = $('#soloSw'); if (sw) sw.classList.toggle('on', ui.solo); }
+function resetSetup() { ui.sv = {}; updateSetupDom(); }
 async function joinNext(fromLink) {  // Schritt 1 Beitreten: Code prüfen, vergebene Avatare laden
   const code = (fromLink || val('code')).trim().toUpperCase();
   if (code.length < 5) return toast('Bitte den 5-stelligen Code eingeben.', true);
@@ -724,13 +826,20 @@ function selAvatar(n) {
   if (ui.taken.includes(n)) return toast('Dieser Avatar ist schon vergeben.', true);
   ui.avatar = n; ui.nick = val('nick');
   document.querySelectorAll('.pick').forEach(b => b.classList.toggle('on', Number(b.dataset.n) === n));
-  const big = $('#bigav'); if (big) big.innerHTML = `<img src="${avSrc(n)}" alt="">`;
+  const big = $('#bigav'); if (big) big.innerHTML = avImg(n, true);
 }
 
 /* ---------- Bausteine ---------- */
-const avSrc = n => `avatars/a${String(n).padStart(2, '0')}.jpg`;
-const av = (n, s = 0, extra = '') => `<span class="av"${s ? ` style="--s:${s}px"` : ''}>${n ? `<img src="${avSrc(n)}" alt="" draggable="false">` : ''}${extra}</span>`;
-const avFull = n => `<div class="avfull">${n ? `<img src="${avSrc(n)}" alt="">` : ''}</div>`;
+/* Avatare: Standbild (jpg) für Listen, Animation (animiertes webp, ~100 KB) für Lobby, Auswahl und Siegerpodest. */
+const AV_V = 2;   // Cache-Buster: bei neuen Avatar-Dateien hochzählen
+const REDUCED_MOTION = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const avSrc = n => `avatars/a${String(n).padStart(2, '0')}.jpg?v=${AV_V}`;
+const avAnim = n => `avatars/a${String(n).padStart(2, '0')}.webp?v=${AV_V}`;
+const avImg = (n, anim) => anim && !REDUCED_MOTION
+  ? `<img src="${avAnim(n)}" alt="" draggable="false" onerror="this.onerror=null;this.src='${avSrc(n)}'">`
+  : `<img src="${avSrc(n)}" alt="" draggable="false">`;
+const av = (n, s = 0, extra = '', anim = false) => `<span class="av"${s ? ` style="--s:${s}px"` : ''}>${n ? avImg(n, anim) : ''}${extra}</span>`;
+const avFull = (n, anim = false) => `<div class="avfull">${n ? avImg(n, anim) : ''}</div>`;
 const CHIP_LOGO = '<svg aria-hidden="true" viewBox="0 0 64 64"><defs><radialGradient id="gkgrad" cx="32" cy="32" r="31" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="rgb(8,36,40)"/><stop offset="0.35" stop-color="rgb(23,72,77)"/><stop offset="0.6" stop-color="rgb(60,130,120)"/><stop offset="0.8" stop-color="rgb(210,190,120)"/><stop offset="1" stop-color="rgb(250,236,200)"/></radialGradient></defs><circle cx="32" cy="32" r="31" fill="url(#gkgrad)" opacity=".55"/><circle cx="32" cy="32" r="31" fill="none" stroke="#faecc8" stroke-width="2"/><circle cx="32.00" cy="32.00" r="4" fill="#f2b544"/><circle cx="38.06" cy="35.50" r="3.4" fill="rgb(16,55,59)"/><circle cx="32.00" cy="39.00" r="3.4" fill="rgb(16,55,59)"/><circle cx="25.94" cy="35.50" r="3.4" fill="rgb(16,55,59)"/><circle cx="25.94" cy="28.50" r="3.4" fill="rgb(16,55,59)"/><circle cx="32.00" cy="25.00" r="3.4" fill="rgb(16,55,59)"/><circle cx="38.06" cy="28.50" r="3.4" fill="rgb(16,55,59)"/><circle cx="46.00" cy="32.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="44.12" cy="39.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="39.00" cy="44.12" r="3.4" fill="rgb(27,79,82)"/><circle cx="32.00" cy="46.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="25.00" cy="44.12" r="3.4" fill="rgb(27,79,82)"/><circle cx="19.88" cy="39.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="18.00" cy="32.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="19.88" cy="25.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="25.00" cy="19.88" r="3.4" fill="rgb(27,79,82)"/><circle cx="32.00" cy="18.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="39.00" cy="19.88" r="3.4" fill="rgb(27,79,82)"/><circle cx="44.12" cy="25.00" r="3.4" fill="rgb(27,79,82)"/><circle cx="52.68" cy="35.65" r="3.4" fill="rgb(60,130,120)"/><circle cx="50.19" cy="42.50" r="3.4" fill="rgb(60,130,120)"/><circle cx="45.50" cy="48.09" r="3.4" fill="rgb(60,130,120)"/><circle cx="39.18" cy="51.73" r="3.4" fill="rgb(60,130,120)"/><circle cx="32.00" cy="53.00" r="3.4" fill="rgb(60,130,120)"/><circle cx="24.82" cy="51.73" r="3.4" fill="rgb(60,130,120)"/><circle cx="18.50" cy="48.09" r="3.4" fill="rgb(60,130,120)"/><circle cx="13.81" cy="42.50" r="3.4" fill="rgb(60,130,120)"/><circle cx="11.32" cy="35.65" r="3.4" fill="rgb(60,130,120)"/><circle cx="11.32" cy="28.35" r="3.4" fill="rgb(60,130,120)"/><circle cx="13.81" cy="21.50" r="3.4" fill="rgb(60,130,120)"/><circle cx="18.50" cy="15.91" r="3.4" fill="rgb(60,130,120)"/><circle cx="24.82" cy="12.27" r="3.4" fill="rgb(60,130,120)"/><circle cx="32.00" cy="11.00" r="3.4" fill="rgb(60,130,120)"/><circle cx="39.18" cy="12.27" r="3.4" fill="rgb(60,130,120)"/><circle cx="45.50" cy="15.91" r="3.4" fill="rgb(60,130,120)"/><circle cx="50.19" cy="21.50" r="3.4" fill="rgb(60,130,120)"/><circle cx="52.68" cy="28.35" r="3.4" fill="rgb(60,130,120)"/><circle cx="59.50" cy="32.00" r="3.6" fill="#fff3d6"/><circle cx="51.45" cy="51.45" r="3.6" fill="#fff3d6"/><circle cx="32.00" cy="59.50" r="3.6" fill="#fff3d6"/><circle cx="12.55" cy="51.45" r="3.6" fill="#fff3d6"/><circle cx="4.50" cy="32.00" r="3.6" fill="#fff3d6"/><circle cx="12.55" cy="12.55" r="3.6" fill="#fff3d6"/><circle cx="32.00" cy="4.50" r="3.6" fill="#fff3d6"/><circle cx="51.45" cy="12.55" r="3.6" fill="#fff3d6"/></svg>';   // Logo-Symbol (icons/logo.svg, bereinigt)
 const chipIco = () => '<svg class="chipi" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#e07a67"/><circle cx="50" cy="50" r="40" fill="none" stroke="#fff" stroke-width="14" stroke-dasharray="12.6 18.8"/><circle cx="50" cy="50" r="24" fill="#fff"/></svg>';
 /* Chipstapel für einen Einsatz: Stapel zu 10 / 5 / 1, wachsen und schrumpfen animiert */
@@ -813,27 +922,31 @@ function homeView() {
     <div class="sheet"><div><label class="f">Spielcode</label><input class="t code" id="code" maxlength="5" autocomplete="off" autocapitalize="characters" value="${esc(ui.code)}" placeholder="· · · · ·" onkeydown="if(event.key==='Enter')joinNext()"></div>
       <button class="link" onclick="watchTV()" style="color:var(--muted);font-size:14px">Nur zuschauen – für einen zweiten Bildschirm</button><div class="grow"></div>
       <div class="actions"><button class="btn" onclick="joinNext()">Weiter</button></div></div></div>`;
-  if (ui.step === 'create') return `<div class="screen"><div class="hero">${topbar('Neue Runde', back('home'))}
-      <h1 class="q" style="margin-top:22px">Wo soll gespielt werden?</h1></div>
-    <div class="sheet">
-      <div class="seg2"><button class="${ui.mode === 'tv' ? '' : 'on'}" onclick="ui.mode='phone';render(true)">📱 Handy<small>Du spielst mit</small></button>
-        <button class="${ui.mode === 'tv' ? 'on' : ''}" onclick="ui.mode='tv';render(true)">📺 TV<small>Du moderierst</small></button></div>
-      ${ui.mode === 'tv' ? '' : `<button class="seg2" style="display:block;width:100%;border:1.5px solid ${ui.solo ? 'var(--ink)' : 'var(--line)'};background:${ui.solo ? 'var(--sel)' : '#fff'};border-radius:18px;padding:14px;text-align:left;font-weight:600" onclick="ui.solo=!ui.solo;render(true)">${ui.solo ? '✅' : '⬜'} Alleine starten (Test)<small style="display:block;font-weight:400;color:var(--muted)">Die Runde lässt sich schon mit einem Spieler starten.</small></button>`}
-      <details class="set" ${ui.settingsOpen ? 'open' : ''} ontoggle="ui.settingsOpen=this.open"><summary>Einstellungen</summary><div class="grid2">
-        ${st('s_count', 'Fragen', '10', 'min=1 max=50')}${st('s_secs', 'Sekunden', '45', 'min=10 max=120')}
-        ${st('s_pts', 'Startpunkte', '10', 'min=1 max=1000')}${st('s_jpq', 'Joker / Frage', '1', 'min=1 max=4')}
-        ${st('s_hsmin', 'Han Solo ab', '3', 'min=2')}${st('s_rt', 'Weiter-Timeout s', 'aus', 'min=5')}
-        ${st('s_max', 'Max. Einsatz', '= Start', 'min=0')}${st('s_min', 'Mindestpunkte', '1', 'min=0')}
-        <div class="hint" style="grid-column:1/-1;margin-top:-4px">Max. Einsatz 0 = unbegrenzt (alles setzen). Mindestpunkte: tiefer fällt niemand, 0 = bis auf 0.</div>
-        <div style="grid-column:1/-1"><label class="f">Reihenfolge</label><select class="t" id="s_order" onchange="ui.sv.s_order=this.value"><option value="ascending">Schwierigkeit steigt</option><option value="random" ${ui.sv.s_order === 'random' ? 'selected' : ''}>Zufällig</option></select></div></div></details>
-      <div class="grow"></div>
-      <div class="actions"><button class="btn" onclick="createNext('${ui.mode === 'tv' ? 'tv' : 'phone'}')">${ui.mode === 'tv' ? 'TV-Runde starten' : 'Weiter'}</button></div></div></div>`;
+  if (ui.step === 'create') {
+    const tv = ui.mode === 'tv';
+    return `<div class="screen crs"><div class="hero">${topbar('Neue Runde', back('home'))}
+      <h1 class="q" style="margin-top:22px">Wie soll gespielt werden?</h1><p class="sub">Alles lässt sich später in der Lobby nicht mehr ändern – stell es jetzt so ein, wie ihr es mögt.</p></div>
+    <div class="sheet cr">
+      <div class="modes"><button class="mode ${tv ? '' : 'on'}" onclick="ui.mode='phone';render(true)"><i>📱</i><b>Handy</b><small>Du spielst mit</small></button>
+        <button class="mode ${tv ? 'on' : ''}" onclick="ui.mode='tv';render(true)"><i>📺</i><b>TV</b><small>Du moderierst</small></button></div>
+      ${tv ? '' : `<button class="swrow" onclick="toggleSolo()"><div><b>Alleine testen</b><small>Die Runde startet schon mit einem Spieler.</small></div><span class="sw ${ui.solo ? 'on' : ''}" id="soloSw"></span></button>`}
+      <div><h3 class="f">Länge der Runde</h3><div class="presets">${PRESETS.map((q, i) => `<button class="preset" data-p="${i}" onclick="setPreset(${i})">${q.name}<small>${q.count} Fragen · ${q.secs} s</small></button>`).join('')}</div></div>
+      <div class="group">${setupRow('s_count')}${setupRow('s_secs')}</div>
+      <div class="group"><h3>Punkte</h3>${setupRow('s_pts')}${setupRow('s_max')}</div>
+      <div class="group"><h3>Joker</h3>${setupRow('s_jpq')}${setupRow('s_hsmin')}</div>
+      <details class="more full" ${ui.settingsOpen ? 'open' : ''} ontoggle="ui.settingsOpen=this.open"><summary>Weitere Optionen</summary>
+        <div class="seg"><button data-o="ascending" onclick="setOrder('ascending')">Schwierigkeit steigt</button><button data-o="random" onclick="setOrder('random')">Zufällige Reihenfolge</button></div>
+        ${setupRow('s_min')}${setupRow('s_rt')}</details>
+      <button class="link full" id="resetSetup" onclick="resetSetup()" hidden>Alles auf Standard zurücksetzen</button>
+      <div class="sumline full" id="sumline"></div><div class="grow"></div>
+      <div class="actions full"><button class="btn" onclick="createNext('${tv ? 'tv' : 'phone'}')">${tv ? 'TV-Runde starten' : 'Weiter'}</button></div></div></div>`;
+  }
   if (ui.step === 'profile') {
     const joining = ui.mode === 'join';
     return `<div class="screen"><div class="hero">${topbar(joining ? 'Runde ' + esc(ui.code) : 'Neue Runde', back(joining ? 'join' : 'create'))}
       <h1 class="q" style="margin-top:18px">Wer bist du?</h1><p class="sub">Name eintragen und einen Avatar wählen.</p></div>
     <div class="sheet">
-      <div class="hero-av"><div class="avfull" id="bigav">${ui.avatar ? `<img src="${avSrc(ui.avatar)}" alt="">` : '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#7d8f90;font-size:14px;text-align:center;padding:12px">Wähle unten<br>einen Avatar</div>'}</div></div>
+      <div class="hero-av"><div class="avfull" id="bigav">${ui.avatar ? avImg(ui.avatar, true) : '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#7d8f90;font-size:14px;text-align:center;padding:12px">Wähle unten<br>einen Avatar</div>'}</div></div>
       <div><label class="f">Dein Name</label><input class="t" id="nick" maxlength="20" autocomplete="off" value="${esc(ui.nick)}" oninput="ui.nick=this.value;nickHint()" placeholder="z. B. Tom"><div class="hint" id="nickHint" style="margin-top:6px;color:var(--bad)"></div></div>
       <div><label class="f">Avatar</label><div class="picker">${Array.from({ length: AVATARS }, (_, i) => i + 1).map(n => `
         <button class="pick ${ui.avatar === n ? 'on' : ''} ${ui.taken.includes(n) ? 'taken' : ''}" data-n="${n}" onclick="selAvatar(${n})" aria-label="Avatar ${n}">${av(n, 64)}</button>`).join('')}</div></div>
@@ -873,9 +986,9 @@ function menuView() {
   return `<div class="scrim" onclick="if(event.target===this)setMenu(false)"><div class="menu">${h}</div></div>`;
 }
 
-const tvkFor = n => n <= 4 ? 9.2 : n <= 8 ? 7.4 : n <= 12 ? 6.3 : 4.6;
+const tvkFor = n => n <= 4 ? 9.5 : n <= 5 ? 6.0 : n <= 12 ? 5.0 : 3.5;   // Avatarbreite in vw je Spielerzahl (Karten + Namen müssen ohne Scrollen auf den Fernseher passen)
 const tileStatus = p => [ID && p.id === ID.playerId ? 'du' : '', p.is_admin ? 'Admin' : p.is_ready ? '✓ bereit' : 'wartet …'].filter(Boolean).join(' · ');
-const tileHtml = p => `<div class="tile" data-pid="${p.id}">${av(p.avatar)}
+const tileHtml = p => `<div class="tile${p.is_ready ? ' rdy' : ''}" data-pid="${p.id}">${av(p.avatar, 0, '', true)}
       <div class="nm">${esc(p.nickname)}</div>
       <div class="st ${p.is_ready ? 'ready' : ''}">${tileStatus(p)}</div>
       ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="askKick('${p.id}')">×</button>` : ''}</div>`;
@@ -892,6 +1005,7 @@ function patchLobby() {
       const st = el.querySelector('.st'), t = tileStatus(p);
       if (st.textContent !== t) st.textContent = t;
       st.classList.toggle('ready', !!p.is_ready);
+      el.classList.toggle('rdy', !!p.is_ready);
     }
     const cur = box.children[i]; if (cur !== el) box.insertBefore(el, cur || null);
   });
@@ -909,17 +1023,22 @@ const notReady = () => S.players.filter(p => !p.is_admin && !p.is_ready);
 const lobbyCount = () => { const r = S.players.filter(p => p.is_admin || p.is_ready).length; return `${S.players.length} Spieler · ${r} bereit`; };
 const startLabel = () => { const n = notReady().length; return n ? `Spiel starten (${n} noch nicht bereit)` : 'Spiel starten – alle bereit'; };
 const adminName = () => { const a = S.players.find(p => p.is_admin); return a ? esc(a.nickname) : 'der Admin'; };
+const lobbyBar = () => { const t = S.players.length, r = S.players.filter(p => p.is_admin || p.is_ready).length; return `<div class="rbar"><i style="width:${t ? Math.round(r / t * 100) : 0}%"></i></div>`; };
+function copyCode() {
+  const t = S.code, ok = () => toast('Code kopiert: ' + t);
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(ok).catch(() => { try { const i = document.createElement('input'); i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); ok(); } catch { toast('Code: ' + t); } });
+}
 function lobbyStatus() {
   const m = me();
   if (isAdmin()) {
     const n = notReady();
-    if (S.players.length < S.settings.min_players) return `<span class="ic">👋</span><div><b>Warte auf Mitspieler</b>Zeig den QR-Code herum – die anderen scannen ihn mit der Handykamera.</div>`;
-    return n.length ? `<span class="ic">⏳</span><div><b>Noch nicht bereit: ${n.map(p => esc(p.nickname)).join(', ')}</b>${n.length === 1 ? 'Liest' : 'Lesen'} vielleicht noch die Anleitung.</div>`
-      : `<span class="ic">🚀</span><div><b>Alle sind bereit!</b>Du kannst das Spiel jetzt starten.</div>`;
+    if (S.players.length < S.settings.min_players) return `<span class="ic">👋</span><div><b>Warte auf Mitspieler</b>Zeig den QR-Code herum – die anderen scannen ihn mit der Handykamera.${lobbyBar()}</div>`;
+    return n.length ? `<span class="ic">⏳</span><div><b>Noch nicht bereit: ${n.map(p => esc(p.nickname)).join(', ')}</b>${n.length === 1 ? 'Liest' : 'Lesen'} vielleicht noch die Anleitung.${lobbyBar()}</div>`
+      : `<span class="ic">🚀</span><div><b>Alle sind bereit!</b>Du kannst das Spiel jetzt starten.${lobbyBar()}</div>`;
   }
   if (!m) return '';
-  return m.is_ready ? `<span class="ic">✅</span><div><b>Du bist bereit</b>${adminName()} startet das Spiel, sobald alle da sind.</div>`
-    : `<span class="ic">👉</span><div><b>Fast geschafft</b>Tippe unten auf „Ich bin bereit“, damit ${adminName()} weiß, dass du startklar bist.</div>`;
+  return m.is_ready ? `<span class="ic">✅</span><div><b>Du bist bereit</b>${adminName()} startet das Spiel, sobald alle da sind.${lobbyBar()}</div>`
+    : `<span class="ic">👉</span><div><b>Fast geschafft</b>Tippe unten auf „Ich bin bereit“, damit ${adminName()} weiß, dass du startklar bist.${lobbyBar()}</div>`;
 }
 /* Rückfragen (Start trotz nicht bereiter Spieler, Spieler entfernen) */
 function askKick(id) { const p = pl(id); ui.ask = { type: 'kick', id, name: p ? p.nickname : '' }; render(true); }
@@ -943,7 +1062,22 @@ function askView() {
 
 /* ---------- Tutorial (vor dem „Bereit“) ---------- */
 const tutKey = () => 'quiz.tut.' + (ID ? ID.sid : '');
-const tutSeen = () => { try { return !!sessionStorage.getItem(tutKey()); } catch { return true; } };
+/* Wer das Spiel kennt, bekommt die Anleitung nicht mehr automatisch: nach „Nicht mehr zeigen“ oder nach 2 gespielten Runden (pro Gerät).
+   Über „Spielanleitung nochmal ansehen“ in der Lobby ist sie jederzeit abrufbar. */
+const TUT_PREF = 'quiz.tutorial', TUT_AUTO_AFTER = 2;
+const tutPref = () => { try { return JSON.parse(localStorage.getItem(TUT_PREF)) || {}; } catch { return {}; } };
+const tutSavePref = o => { try { localStorage.setItem(TUT_PREF, JSON.stringify(o)); } catch {} };
+const tutKnown = () => { const p = tutPref(); return !!p.never || (p.rounds || 0) >= TUT_AUTO_AFTER; };
+const tutSeen = () => { try { return tutKnown() || !!sessionStorage.getItem(tutKey()); } catch { return true; } };
+function tutNever() { const p = tutPref(); p.never = true; tutSavePref(p); tutDone(); toast('Okay – die Anleitung kommt nicht mehr von selbst. Du findest sie in der Lobby unter „Spielanleitung nochmal ansehen“.'); }
+function noteRoundFinished() {
+  if (!ID || !ID.playerToken || !S || S.status !== 'finished') return;
+  const p = tutPref(); p.done = p.done || {};
+  if (p.done[ID.sid]) return;
+  p.done[ID.sid] = 1; p.rounds = (p.rounds || 0) + 1;
+  const keys = Object.keys(p.done); if (keys.length > 20) delete p.done[keys[0]];
+  tutSavePref(p);
+}
 const tutActive = () => !!(ID && S && S.status === 'lobby' && ID.playerToken && !isTV() && (ui.tutOpen || !tutSeen()));
 function tutOpen() { ui.tutOpen = true; ui.tutStep = 0; render(true); window.scrollTo(0, 0); }
 function tutGo(d) { ui.tutStep = Math.max(0, Math.min(tutSteps().length - 1, ui.tutStep + d)); render(true); window.scrollTo(0, 0); }
@@ -978,29 +1112,30 @@ function tutorialView() {
     <div class="meta" style="margin-top:18px"><span>Schritt ${i + 1} von ${steps.length}</span></div><h1 class="q">${st.title}</h1></div>
     <div class="sheet"><div class="tut-ic">${st.icon}</div><div class="tut-body">${st.body}</div>
       <div class="dots">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div><div class="grow"></div>
-      <div class="actions">${last ? '<button class="btn" onclick="tutDone()">Verstanden – los geht\'s</button>' : '<button class="btn" onclick="tutGo(1)">Weiter</button>'}${i > 0 ? '<button class="btn ghost" onclick="tutGo(-1)">Zurück</button>' : ''}</div></div></div>`;
+      <div class="actions">${last ? '<button class="btn" onclick="tutDone()">Verstanden – los geht\'s</button>' : '<button class="btn" onclick="tutGo(1)">Weiter</button>'}${i > 0 ? '<button class="btn ghost" onclick="tutGo(-1)">Zurück</button>' : ''}<button class="link" onclick="tutNever()">Ich kenne das Spiel – nicht mehr automatisch zeigen</button></div></div></div>`;
 }
 
 function lobbyView() {
   const cfg = S.settings, m = me(), tv = isTV();
   const tiles = S.players.map(tileHtml).join('');
   const share = `<div class="qr">${qrSvg(joinUrl())}<div class="url">${esc(joinUrl())}</div></div>`;
-  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s pro Frage</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">${Number(cfg.max_stake) > 0 ? `Einsatz max. ${cfg.max_stake}` : 'Einsatz unbegrenzt'}</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
+  const chips = `<div class="chips soft"><span class="chip">❓ ${cfg.question_count} Fragen</span><span class="chip">⏱ ${cfg.answer_seconds} s pro Frage</span><span class="chip">🪙 ${cfg.start_points} Startpunkte</span><span class="chip">🎯 ${Number(cfg.max_stake) > 0 ? `Einsatz max. ${cfg.max_stake}` : 'Einsatz unbegrenzt'}</span><span class="chip">🃏 Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
   const need = cfg.min_players;
   const action = isAdmin()
     ? `<button class="btn" id="startBtn" onclick="askStart()" ${S.players.length < need ? 'disabled' : ''}>${startLabel()}</button><div class="hint" id="startHint" style="text-align:center" ${S.players.length < need ? '' : 'hidden'}>Mindestens ${need} Spieler nötig</div>`
     : tv ? `<div class="hint" style="text-align:center;width:100%;font-size:clamp(16px,1.3vw,26px)">Das Spiel startet, sobald ${adminName()} auf „Spiel starten“ tippt.</div>`
     : m && m.is_ready ? `<button class="btn ghost small" onclick="A.ready(false)">Doch noch nicht bereit</button>`
     : `<button class="btn" onclick="A.ready(true)">Ich bin bereit</button>`;
-  const hero = `<div class="hero">${topbar('Lobby')}<div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>`;
+  const codeBoxes = `<button class="codebox" onclick="copyCode()" aria-label="Spielcode ${esc(S.code)} kopieren">${[...S.code].map(ch => `<span>${esc(ch)}</span>`).join('')}</button>`;
+  const hero = `<div class="hero lobbyhero">${topbar('Lobby')}<div class="sub" style="margin-top:16px">Spielcode · antippen zum Kopieren</div>${codeBoxes}</div>`;
   const tvk = tvkFor(S.players.length);
   const host = location.host + location.pathname.replace(/index\.html$/, '');
   const tvHero = `<div class="hero">${topbar('Lobby')}<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:4vw;flex-wrap:wrap"><div><div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>
     <div class="tvjoin"><b>So machst du mit:</b><br>📷 Handykamera auf den QR-Code richten – oder<br><b>${esc(host)}</b> öffnen und Code <b>${esc(S.code)}</b> eingeben</div></div></div>`;
   if (tv) return `<div class="screen">${tvHero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0"><span id="pcount">${lobbyCount()}</span></h3><div class="tiles" id="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}${askView()}</div>`;
   const status = `<div class="status ${(m && m.is_ready) || (isAdmin() && !notReady().length && S.players.length >= need) ? 'ok' : ''}" id="lobbyStatus">${lobbyStatus()}</div>`;
-  const invite = isAdmin() ? share : `<details class="invite"><summary>➕ Weitere Mitspieler einladen</summary>${share}</details>`;
-  return `<div class="screen">${hero}<div class="sheet">${status}${invite}<div><h3 class="f"><span id="pcount">${lobbyCount()}</span></h3><div class="tiles" id="tiles">${tiles}</div></div>${chips}<button class="link" onclick="tutOpen()">Spielanleitung nochmal ansehen</button><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}${askView()}</div>`;
+  const invite = `<details class="invite" ${S.players.length < 2 ? 'open' : ''}><summary>📲 Mitspieler einladen – QR-Code &amp; Link</summary>${share}</details>`;
+  return `<div class="screen">${hero}<div class="sheet">${status}<div><h3 class="f"><span id="pcount">${lobbyCount()}</span></h3><div class="tiles" id="tiles">${tiles}</div></div>${invite}${chips}<button class="link" onclick="tutOpen()">Spielanleitung nochmal ansehen</button><button class="link" id="hapBtn" style="color:var(--muted);font-size:14px" onclick="toggleHaptics()">📳 Vibration: ${hapOn() ? 'an' : 'aus'}</button><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}${askView()}</div>`;
 }
 
 const ownResult = () => S.reveal && ID && S.reveal.results.find(r => r.player_id === ID.playerId);
@@ -1086,7 +1221,7 @@ function stakeBox() {
       <div style="text-align:center"><div class="num" id="stakeVal" aria-live="polite">${ui.stake}</div><div class="of">${capped ? `höchstens ${max} · du hast ${pts}` : `von ${pts} Punkten`}</div></div>
       <button class="round" onclick="setStake(ui.stake+1)" aria-label="mehr">+</button></div>
     ${chipStacksHtml(ui.stake)}
-    <input id="stakeRange" type="range" min="0" max="${max}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
+    <input id="stakeRange" type="range" min="0" max="${max}" step="1" value="${ui.stake}" oninput="setStake(this.value);tick(6)">
     </div>`;
 }
 /* Zwischenstand unten in der Frage: wo stehe ich, wie weit ist es nach vorn/hinten, was bringt voller Einsatz? */
@@ -1200,7 +1335,7 @@ function awards(f) {
 }
 function finishedView() {
   const f = S.final, tv = isTV(), mine = ID && f.find(p => p.player_id === ID.playerId);
-  const podium = [f[1], f[0], f[2]].map((p, i) => p ? `<div class="pl p${[2, 1, 3][i]}">${avFull(p.avatar)}<div class="nm">${esc(p.nickname)}</div><div class="pt">${p.points} Punkte</div><div class="blk">${p.rank}</div></div>` : '<div class="pl"></div>').join('');
+  const podium = [f[1], f[0], f[2]].map((p, i) => p ? `<div class="pl p${[2, 1, 3][i]}">${avFull(p.avatar, true)}<div class="nm">${esc(p.nickname)}</div><div class="pt">${p.points} Punkte</div><div class="blk">${p.rank}</div></div>` : '<div class="pl"></div>').join('');
   const ties = f.filter(p => p.rank === 1);
   const head = ties.length > 1 ? `🏆 Gleichstand: ${ties.map(p => esc(p.nickname)).join(' &amp; ')}` : f[0] ? `🏆 ${esc(f[0].nickname)} gewinnt!` : 'Spiel beendet';
   const hero = `<div class="hero">${topbar('Spiel beendet')}<h1 class="q" style="text-align:center;margin-top:10px;font-size:${tv ? '' : '26px'}">${head}</h1><div class="podium">${podium}</div></div>`;
@@ -1243,7 +1378,20 @@ function flipRows() {
   if (!moved) return;
   setTimeout(() => { box.classList.add('flip'); rows.forEach(r => (r.style.transform = '')); }, 1100);
 }
-const buzz = p => { try { if (!isTV() && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(p); } catch {} };
+/* Haptisches Feedback: Android per navigator.vibrate; iPhone (Safari ab 17.4) über einen unsichtbaren Schalter (checkbox switch),
+   der beim Umlegen ein Tick-Feedback auslöst – geht nur direkt nach einer Tipp-Geste. In der Lobby abschaltbar. */
+const hapOn = () => { try { return localStorage.getItem('quiz.haptics') !== 'off'; } catch { return true; } };
+let hapEl = null;
+function iosTick() { try { if (!hapEl) { hapEl = document.createElement('label'); hapEl.setAttribute('aria-hidden', 'true'); hapEl.style.cssText = 'position:fixed;left:-200px;top:-200px;width:1px;height:1px;opacity:0;pointer-events:none'; hapEl.innerHTML = '<input type="checkbox" switch tabindex="-1">'; document.body.appendChild(hapEl); } hapEl.click(); } catch {} }
+const buzz = p => { try { if (isTV() || !hapOn()) return; if (navigator.vibrate) { if (!navigator.userActivation || navigator.userActivation.hasBeenActive) navigator.vibrate(p); } else iosTick(); } catch {} };
+const tick = (() => { let last = 0; return p => { const n = Date.now(); if (n - last > 70) { last = n; buzz(p); } }; })();   // für Schieberegler: nicht bei jedem Pixel
+document.addEventListener('click', e => {   // jede Berührung eines Buttons: kurzer Tick; Antworten/Avatare etwas deutlicher, Hauptbuttons kräftiger
+  const t = e.target.closest && e.target.closest('button, summary, .pick');
+  if (!t || t.disabled) return;
+  const cl = t.classList, primary = cl.contains('btn') && !cl.contains('ghost') && !cl.contains('soft') && !cl.contains('danger') && !cl.contains('small');
+  buzz(cl.contains('ans') || cl.contains('pick') || cl.contains('mode') || cl.contains('preset') ? 14 : primary ? 22 : 8);
+}, true);
+function toggleHaptics() { const on = !hapOn(); try { localStorage.setItem('quiz.haptics', on ? 'on' : 'off'); } catch {} const b = $('#hapBtn'); if (b) b.textContent = `📳 Vibration: ${on ? 'an' : 'aus'}`; if (on) buzz(25); }
 function effects() {
   if (!S || !ID) return;
   if (S.status === 'reveal') {
@@ -1280,6 +1428,7 @@ function render(force) {
   const app = $('#app');
   if (!ID || !S) { app.innerHTML = homeView(); if (!pool) loadPool(); }
   else app.innerHTML = tutActive() ? tutorialView() : { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
+  if (!ID || !S) { if (ui.step === 'create') updateSetupDom(); }
   if (sameView) { document.querySelectorAll('.screen').forEach(e => e.classList.add('noanim')); window.scrollTo(0, sy); }   // gleiche Ansicht: nicht neu einblenden
   if (keep) { const e = document.getElementById(keep.id); if (e) { e.focus(); try { e.setSelectionRange(keep.pos, keep.pos); } catch {} } }
   if (!sameView) effects();
