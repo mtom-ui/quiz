@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.3.0">
+<meta name="app-version" content="0.4.0">
 <title>Quiz</title>
 <style>
   :root {
@@ -63,6 +63,7 @@
   .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
   .btn.soft { background: var(--sel); color: var(--ink); }
   .btn.small { height: 44px; border-radius: 22px; font-size: 15px; }
+  .btn.wait { opacity: .5; }
   .btn.danger { background: #fff; color: var(--bad); border: 1.5px solid var(--bad); }
   .link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; text-align: center; padding: 6px; }
 
@@ -122,7 +123,7 @@
   .pick.on { border-color: var(--ink); transform: scale(1.06); box-shadow: 0 8px 18px -8px rgba(23,72,77,.7); }
   .pick.taken { opacity: .28; }
   .pick.taken::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; color: #000; font-weight: 700; font-size: 22px; }
-  .hero-av { width: 150px; margin: 0 auto; }
+  .hero-av { width: 120px; margin: 0 auto; }
 
   /* ---------- Listen ---------- */
   .rows { display: flex; flex-direction: column; }
@@ -206,7 +207,7 @@
   body.tv .lobby-cols { grid-template-columns: auto 1fr; gap: 3vw; }
   body.tv .row { padding: 14px 0; font-size: 22px; }
   body.tv .row .av { --s: 64px; }
-  body.tv .rows { columns: 2; column-gap: 56px; }
+  body.tv .rows { display: block; columns: 2; column-gap: 56px; }
   body.tv .row { break-inside: avoid; }
   /* Breite Bildschirme (Laptop/PC): Startablauf als zweispaltige Karte statt schmalem Handy-Streifen */
   @media (min-width: 900px) {
@@ -238,6 +239,120 @@
   .dots i.on { background: var(--ink); width: 22px; }
   .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   @media (max-width: 900px) { .twocol { grid-template-columns: 1fr; } }
+
+  /* ---------- 0.4.0: Erklärungen, Status, Animationen ---------- */
+  .howto { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 0; padding: 0; list-style: none; counter-reset: h; }
+  .howto li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text); }
+  .howto li::before { counter-increment: h; content: counter(h); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--sel); color: var(--ink); font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+  .status { border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; background: #f6f1ec; font-size: 15px; }
+  .status.ok { background: var(--ok-bg); }
+  .status .ic { font-size: 24px; flex: none; }
+  .status b { display: block; font-size: 16px; }
+  details.invite { border: 1.5px solid var(--line); border-radius: 18px; padding: 0 14px; }
+  details.invite summary { padding: 14px 0; font-weight: 600; cursor: pointer; }
+  details.invite .qr { border: 0; padding: 0 0 14px; }
+  details.invite .qr svg { width: 170px; height: 170px; }
+  .tvjoin { margin-top: 18px; font-size: clamp(16px, 1.3vw, 26px); line-height: 1.45; }
+  .tvjoin b { color: #f2c76a; }
+  .tbar { height: 6px; border-radius: 3px; background: #ffffff26; overflow: hidden; margin: -2px 0 14px; }
+  .tbar i { display: block; height: 100%; background: var(--coral); transform-origin: left; transition: transform .25s linear; }
+  body.tv .tbar { height: 10px; border-radius: 5px; }
+  .jk.arm { background: var(--coral); border-color: var(--coral); color: #fff; animation: wob .5s ease; }
+  @keyframes wob { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+  .strip { display: flex; gap: 10px 8px; flex-wrap: wrap; justify-content: center; }
+  .strip .who { width: 52px; text-align: center; transition: opacity .3s; }
+  .strip .who .av { margin: 0 auto; }
+  .strip .who small { display: block; font-size: 11px; line-height: 1.2; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+  .strip .who.wait { opacity: .42; }
+  .strip .who.wait .av { filter: grayscale(.8); }
+  body.tv .strip .who { width: 92px; }
+  body.tv .strip .who small { font-size: 16px; }
+  .av .ok { animation: pop .35s cubic-bezier(.3,1.6,.5,1); }
+  .waitmsg { text-align: center; color: var(--muted); font-size: 15px; padding: 6px 0 4px; }
+  .ans.has-v { flex-wrap: wrap; }
+  .voters { display: flex; flex-basis: 100%; padding-left: 2px; margin-top: 4px; }
+  .voters .av { --s: 22px; border-radius: 6px; box-shadow: 0 0 0 2px #fff; margin-right: -5px; }
+  body.tv .voters { flex-basis: auto; margin: 0 40px 0 auto; }
+  body.tv .voters .av { --s: clamp(28px, 3.4vh, 48px); border-radius: 10px; margin-right: -8px; }
+  body.tv .waitmsg { font-size: clamp(16px, 1.3vw, 26px); }
+  .meta .mine { font-size: 15px; opacity: .85; }
+  .row .ch { font-size: 12px; font-weight: 700; margin-left: 6px; }
+  .row .ch.up { color: var(--ok); } .row .ch.down { color: var(--bad); }
+  .row .rdy { color: var(--ok); font-size: 13px; margin-left: 6px; opacity: 0; transition: opacity .3s; }
+  .row.isready .rdy { opacity: 1; }
+  .rows.flip .row { transition: transform .7s cubic-bezier(.2,.8,.2,1); }
+  .podium { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 18px 0 0; }
+  .podium .pl { flex: 1; max-width: 120px; text-align: center; color: #fff; }
+  .podium .avfull { width: 78%; margin: 0 auto 8px; border-radius: 16px; }
+  .podium .p1 .avfull { width: 92%; }
+  .podium .nm { font-weight: 700; font-size: 14px; line-height: 1.15; overflow-wrap: anywhere; }
+  .podium .pt { font-size: 13px; opacity: .8; margin-bottom: 6px; }
+  .podium .blk { border-radius: 14px 14px 0 0; background: #ffffff1f; font: 700 30px var(--serif); display: grid; place-items: start center; padding-top: 8px; transform-origin: bottom; }
+  .podium .p1 .blk { height: 96px; background: #f2c76a; color: var(--ink); }
+  .podium .p2 .blk { height: 66px; background: #ffffff38; }
+  .podium .p3 .blk { height: 46px; background: #ffffff24; }
+  body.tv .podium { gap: 2vw; }
+  body.tv .podium .pl { max-width: 15vw; }
+  body.tv .podium .nm { font-size: clamp(18px, 1.6vw, 32px); }
+  body.tv .podium .p1 .blk { height: 9vh; } body.tv .podium .p2 .blk { height: 6vh; } body.tv .podium .p3 .blk { height: 4vh; }
+  body.tv .podium .pl { max-width: 10vw; }
+  body.tv .podium .pt { font-size: clamp(14px, 1.1vw, 22px); }
+  body.tv .podium .blk { font-size: clamp(24px, 2.4vw, 44px); }
+  body.tv .awards { grid-template-columns: repeat(4, 1fr); }
+  body.tv .award { font-size: clamp(13px, 1vw, 20px); } body.tv .award b { font-size: clamp(15px, 1.25vw, 26px); }
+  body.tv .fin .rows { display: block; columns: 3; column-gap: 40px; }
+  body.tv .fin .row { padding: .6vh 0; font-size: clamp(15px, 1.2vw, 24px); }
+  body.tv .fin .row .av { --s: clamp(28px, 3vh, 46px); }
+  .awards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .award { background: #f6f1ec; border-radius: 16px; padding: 12px; font-size: 13px; color: var(--muted); }
+  .award b { display: block; color: var(--text); font-size: 15px; margin-top: 2px; }
+  .award i { font-style: normal; font-size: 20px; }
+  .netpill { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: var(--bad); color: #fff; font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 20px; z-index: 40; box-shadow: 0 8px 20px #0003; }
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
+  .confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: fall var(--d) cubic-bezier(.25,.5,.5,1) var(--w) forwards; }
+  @keyframes fall { to { transform: translate(var(--x), 110vh) rotate(var(--r)); } }
+  .mock { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+  .mock span { border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 10px; font-size: 14px; font-weight: 600; }
+  .mock span.sel { background: var(--sel); border-color: var(--ink); }
+  .try { background: #f6f1ec; border-radius: 16px; padding: 14px; margin: 0 0 12px; }
+  .try .res { display: flex; justify-content: space-between; font-size: 15px; margin-top: 4px; }
+  .try input[type=range] { margin: 8px 0; }
+  .ticker { font-variant-numeric: tabular-nums; }
+
+  /* Einblenden nur bei neuer Ansicht (.noanim = gleiche Ansicht aktualisiert) */
+  .screen:not(.noanim) .answers .ans { animation: rise .45s cubic-bezier(.2,.9,.3,1.2) both; animation-delay: calc(var(--i) * 70ms + 120ms); }
+  .screen:not(.noanim) .q { animation: rise .45s ease both; }
+  .screen:not(.noanim) .banner.ok { animation: celebrate .7s cubic-bezier(.3,1.5,.5,1) .15s both; }
+  .screen:not(.noanim) .banner.bad { animation: rise .35s ease .1s both, shake .45s ease .45s; }
+  .screen:not(.noanim) .banner.zero { animation: rise .35s ease .1s both; }
+  .screen:not(.noanim) .ans.right { animation: rise .45s ease both, glow 1.2s ease .5s; }
+  .screen:not(.noanim) .podium .blk { animation: grow .7s cubic-bezier(.2,.9,.3,1.1) both; }
+  .screen:not(.noanim) .podium .p1 .blk { animation-delay: .9s; } .screen:not(.noanim) .podium .p2 .blk { animation-delay: .5s; } .screen:not(.noanim) .podium .p3 .blk { animation-delay: .1s; }
+  .screen:not(.noanim) .podium .avfull, .screen:not(.noanim) .podium .nm, .screen:not(.noanim) .podium .pt { animation: rise .5s ease both; }
+  .screen:not(.noanim) .podium .p1 > * { animation-delay: 1.3s; } .screen:not(.noanim) .podium .p2 > * { animation-delay: .9s; } .screen:not(.noanim) .podium .p3 > * { animation-delay: .5s; }
+  .screen:not(.noanim) .award { animation: rise .4s ease both; animation-delay: calc(var(--i) * 90ms + 1.6s); }
+  .screen:not(.noanim) .tut-ic { animation: celebrate .5s cubic-bezier(.3,1.5,.5,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+  @keyframes celebrate { 0% { opacity: 0; transform: scale(.7); } 60% { opacity: 1; transform: scale(1.05); } 100% { transform: none; } }
+  @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  @keyframes glow { 50% { box-shadow: 0 0 0 6px #2b7a5b44, 0 10px 22px -10px rgba(23,72,77,.55); } }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .ans .cnt { transition: opacity .3s; }
+
+  /* TV: Auflösung ohne Scrollen – links Antworten, rechts Rangliste */
+  body.tv .revcols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 3vw; align-items: start; }
+  body.tv .revcols .rows { columns: 1; }
+  body.tv .revcols .row { padding: .9vh 0; font-size: clamp(16px, 1.4vw, 26px); }
+  body.tv .revcols .row .av { --s: clamp(30px, 3.2vh, 52px); }
+  body.tv .revcols .answers { grid-template-columns: 1fr; gap: 1.6vh; }
+  body.tv .revcols .ans { min-height: 0; padding: 1.6vh 22px; }
+  body.tv .note { font-size: clamp(16px, 1.3vw, 26px); }
+  body.tv .hero .q.small { font-size: clamp(26px, 2.8vw, 44px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; }
+    .confetti { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -296,7 +411,7 @@ let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
 const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
 let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false, tutOpen: false, tutStep: 0,
-  menu: false, confirm: null, reason: '', stake: 1, answer: null, joker: '', sv: {} };
+  menu: false, confirm: null, ask: null, reason: '', stake: 1, answer: null, joker: '', arm: '', sv: {}, takenNames: [] };
 let pool = null;
 let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
 
@@ -308,6 +423,7 @@ function leave() {
   ID = S = M = null; lastKey = ''; ui.step = 'home'; ui.menu = false; ui.confirm = null;
   try { sessionStorage.removeItem('quiz.id'); localStorage.removeItem('quiz.last'); } catch {}
   if (rt) { rt.close(); rt = null; }
+  if (wake) { wake.release().catch(() => {}); wake = null; }
   history.replaceState(null, '', location.pathname);
   render(true);
 }
@@ -338,16 +454,34 @@ async function refresh(force) {
     ]);
     offset = Date.parse(s.server_now) - Date.now();
     S = s; M = m;
+    if (S.status !== 'lobby') ui.ask = null;
     if (S.status === 'question_active' && S.question && lastQ !== S.question.sq_id) {
       lastQ = S.question.sq_id; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = ''; ui.menu = false;
       ui.stake = Math.min(1, M ? M.points : 0);
     }
+    netState(true);
     handleEvent();
     render();
   } catch (e) {
     if (e.message === 'session_not_found' || e.message === 'player_not_found') { toast(errText(e), true); leave(); }
+    else netState(false);
   } finally { busy = false; }
 }
+/* Verbindungsanzeige: erst nach zwei Fehlversuchen in Folge, damit ein einzelner Aussetzer nicht nervt */
+let netFails = 0;
+function netState(ok) {
+  netFails = ok ? 0 : netFails + 1;
+  let pill = $('#netpill');
+  if (netFails >= 2 && !pill) { document.body.insertAdjacentHTML('beforeend', '<div class="netpill" id="netpill">Keine Verbindung – versuche es erneut …</div>'); }
+  if (ok && pill) { pill.remove(); toast('Wieder verbunden'); }
+}
+/* Bildschirm während einer Runde nicht abdunkeln lassen (wo der Browser es unterstützt) */
+let wake = null;
+async function keepAwake() {
+  if (!ID || wake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+  try { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => (wake = null)); } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && ID) { refresh(true); keepAwake(); } });
 function handleEvent() {
   const ev = S.last_event;
   if (!ev) return;
@@ -386,6 +520,8 @@ function connectRealtime() {
 }
 
 /* Takt: Countdown anzeigen, abgelaufene Fristen beim Server anstoßen, Polling */
+const secsLeft = dl => (Date.parse(dl) - (Date.now() + offset)) / 1000;
+const barScale = () => Math.max(0, Math.min(1, secsLeft(S.deadline) / S.settings.answer_seconds));
 const mmss = sec => { sec = Math.max(0, Math.ceil(sec)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); };
 setInterval(() => {
   if (!S) return;
@@ -395,6 +531,7 @@ setInterval(() => {
     const left = (Date.parse(S.deadline) - now) / 1000;
     if (t) t.textContent = mmss(left);
     if (box) box.classList.toggle('low', left <= 10 && left > 0);
+    const bar = $('#tbar'); if (bar) bar.style.transform = `scaleX(${barScale()})`;
     if (left < -(S.settings.grace_ms / 1000) - 0.3 && Date.now() - lastPoke > 1000) { lastPoke = Date.now(); refresh(true); }
   } else if (S.status === 'reveal' && S.ready_deadline) {
     const left = (Date.parse(S.ready_deadline) - now) / 1000;
@@ -416,22 +553,33 @@ const settingsFromForm = () => {
   return s;
 };
 let pendingSettings = {};
-async function joinNext() {          // Schritt 1 Beitreten: Code prüfen, vergebene Avatare laden
-  const code = val('code').trim().toUpperCase();
+async function joinNext(fromLink) {  // Schritt 1 Beitreten: Code prüfen, vergebene Avatare laden
+  const code = (fromLink || val('code')).trim().toUpperCase();
   if (code.length < 5) return toast('Bitte den 5-stelligen Code eingeben.', true);
   try {
     const s = await rpc('quiz_state_by_code', { p_code: code });
     if (s.status === 'finished') throw new Error('session_finished');
     ui.code = code; ui.taken = s.players.map(p => p.avatar).filter(Boolean); ui.mode = 'join';
-    if (ui.taken.includes(ui.avatar)) ui.avatar = 0;
+    ui.takenNames = s.players.map(p => p.nickname.toLowerCase());
+    pickFreeAvatar();
     go('profile');
-  } catch (e) { toast(errText(e), true); }
+  } catch (e) { toast(errText(e), true); if (fromLink) { ui.step = 'join'; render(true); } }
+}
+/* Gemerkten Avatar behalten, wenn frei – sonst einen freien zufällig vorschlagen (man kann sofort beitreten) */
+function pickFreeAvatar() {
+  if (ui.avatar && !ui.taken.includes(ui.avatar)) return;
+  const free = Array.from({ length: AVATARS }, (_, i) => i + 1).filter(n => !ui.taken.includes(n));
+  ui.avatar = free.length ? free[Math.floor(Math.random() * free.length)] : 0;
 }
 function createNext(mode) {           // Schritt 1 Erstellen: Einstellungen merken
   pendingSettings = settingsFromForm();
-  ui.mode = mode; ui.taken = [];
+  ui.mode = mode; ui.taken = []; ui.takenNames = []; pickFreeAvatar();
   if (mode === 'tv') return createGame('tv');
   go('profile');
+}
+function nickHint() {
+  const h = $('#nickHint'); if (!h) return;
+  h.textContent = (ui.takenNames || []).includes(ui.nick.trim().toLowerCase()) ? 'Diesen Namen gibt es in der Runde schon – bitte einen anderen wählen.' : '';
 }
 async function submitProfile() {
   ui.nick = val('nick').trim();
@@ -469,7 +617,7 @@ async function watchTV() {            // nur zuschauen (ohne Spielerrolle), z. B
   } catch (e) { toast(errText(e), true); }
 }
 function resume() { const l = loadLast(); if (l) { ID = l; save(); startSync(); } }
-function startSync() { lastKey = ''; seenEvent = null; lastQ = null; connectRealtime(); refresh(true); }
+function startSync() { lastKey = ''; seenEvent = null; lastQ = null; connectRealtime(); refresh(true); keepAwake(); }
 
 /* ---------- Aktionen im Spiel ---------- */
 const A = {
@@ -492,7 +640,9 @@ const A = {
 };
 const setMenu = on => { ui.menu = on; ui.confirm = null; render(true); };
 const setConfirm = c => { ui.confirm = c; render(true); };
-const pick = l => { ui.answer = l; document.querySelectorAll('.ans[data-l]').forEach(b => b.classList.toggle('sel', b.dataset.l === l)); };
+const pick = l => { ui.answer = l; document.querySelectorAll('.ans[data-l]').forEach(b => b.classList.toggle('sel', b.dataset.l === l)); submitLabel(); };
+const submitTxt = () => !ui.answer ? 'Erst eine Antwort wählen' : `${ui.answer} bestätigen · ${ui.stake} ${ui.stake === 1 ? 'Punkt' : 'Punkte'} Einsatz`;
+function submitLabel() { const b = $('#submitBtn'); if (b) { b.textContent = submitTxt(); b.classList.toggle('wait', !ui.answer); } }
 const setStake = v => {
   const max = M ? M.points : 0;
   ui.stake = Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
@@ -500,7 +650,15 @@ const setStake = v => {
   $('#stakeVal').textContent = ui.stake; $('#stakeRange').value = ui.stake;
   document.querySelectorAll('[data-jk=safety_net]').forEach(e => (e.disabled = ui.stake === 0 && ui.joker !== 'safety_net'));
   document.querySelectorAll('[data-chip]').forEach(c => c.classList.toggle('on', Number(c.dataset.chip) === ui.stake));
+  submitLabel();
 };
+/* Sofort-Joker (50:50, Gruppe): erstes Tippen fragt nach, zweites setzt ein – kein versehentliches Verbrauchen */
+function armJoker(key) {
+  if (ui.arm === key) { ui.arm = ''; return A.joker(key); }
+  ui.arm = key; clearTimeout(armJoker.t);
+  document.querySelectorAll('[data-ij]').forEach(b => { const on = b.dataset.ij === key; b.classList.toggle('arm', on); b.querySelector('.lb').textContent = on ? 'Einsetzen?' : b.dataset.label; });
+  armJoker.t = setTimeout(() => { ui.arm = ''; document.querySelectorAll('[data-ij]').forEach(b => { b.classList.remove('arm'); if (!b.classList.contains('on')) b.querySelector('.lb').textContent = b.dataset.label; }); }, 3500);
+}
 const setJoker = j => { ui.joker = ui.joker === j ? '' : j; document.querySelectorAll('[data-jk]').forEach(b => b.classList.toggle('on', b.dataset.jk === ui.joker)); };
 function selAvatar(n) {
   if (ui.taken.includes(n)) return toast('Dieser Avatar ist schon vergeben.', true);
@@ -542,7 +700,7 @@ function homeView() {
   if (ui.step === 'join') return `<div class="screen"><div class="hero">${topbar('Beitreten', back('home'))}
       <h1 class="q" style="margin-top:22px">Wie lautet der Code?</h1><p class="sub">Du findest ihn in der Lobby oder auf dem Fernseher.</p></div>
     <div class="sheet"><div><label class="f">Spielcode</label><input class="t code" id="code" maxlength="5" autocomplete="off" autocapitalize="characters" value="${esc(ui.code)}" placeholder="· · · · ·" onkeydown="if(event.key==='Enter')joinNext()"></div>
-      <button class="link" onclick="watchTV()">Nur zuschauen (TV-Ansicht)</button><div class="grow"></div>
+      <button class="link" onclick="watchTV()" style="color:var(--muted);font-size:14px">Nur zuschauen – für einen zweiten Bildschirm</button><div class="grow"></div>
       <div class="actions"><button class="btn" onclick="joinNext()">Weiter</button></div></div></div>`;
   if (ui.step === 'create') return `<div class="screen"><div class="hero">${topbar('Neue Runde', back('home'))}
       <h1 class="q" style="margin-top:22px">Wo soll gespielt werden?</h1></div>
@@ -563,7 +721,7 @@ function homeView() {
       <h1 class="q" style="margin-top:18px">Wer bist du?</h1><p class="sub">Name eintragen und einen Avatar wählen.</p></div>
     <div class="sheet">
       <div class="hero-av"><div class="avfull" id="bigav">${ui.avatar ? `<img src="${avSrc(ui.avatar)}" alt="">` : '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#7d8f90;font-size:14px;text-align:center;padding:12px">Wähle unten<br>einen Avatar</div>'}</div></div>
-      <div><label class="f">Dein Name</label><input class="t" id="nick" maxlength="20" autocomplete="off" value="${esc(ui.nick)}" oninput="ui.nick=this.value" placeholder="z. B. Tom"></div>
+      <div><label class="f">Dein Name</label><input class="t" id="nick" maxlength="20" autocomplete="off" value="${esc(ui.nick)}" oninput="ui.nick=this.value;nickHint()" placeholder="z. B. Tom"><div class="hint" id="nickHint" style="margin-top:6px;color:var(--bad)"></div></div>
       <div><label class="f">Avatar</label><div class="picker">${Array.from({ length: AVATARS }, (_, i) => i + 1).map(n => `
         <button class="pick ${ui.avatar === n ? 'on' : ''} ${ui.taken.includes(n) ? 'taken' : ''}" data-n="${n}" onclick="selAvatar(${n})" aria-label="Avatar ${n}">${av(n, 64)}</button>`).join('')}</div></div>
       <div class="grow"></div>
@@ -575,7 +733,12 @@ function homeView() {
     <div class="sheet">
       ${last && last.sid ? `<div class="note"><b>Laufende Runde ${esc(last.code)}</b><div style="display:flex;gap:10px;margin-top:10px"><button class="btn small" onclick="resume()">Fortsetzen</button><button class="btn small ghost" onclick="leave()">Vergessen</button></div></div>` : ''}
       <button class="btn" onclick="go('join')">Spiel beitreten</button>
-      <button class="btn ghost" onclick="ui.mode='phone';go('create')">Neue Runde erstellen</button><div class="grow"></div></div></div>`;
+      <button class="btn ghost" onclick="ui.mode='phone';go('create')">Neue Runde erstellen</button>
+      <div><h3 class="f" style="margin-top:8px">So geht's</h3><ol class="howto">
+        <li><span><b>Einer erstellt die Runde</b> – auf dem Handy oder auf dem Fernseher/Laptop.</span></li>
+        <li><span><b>Alle anderen scannen den QR-Code</b> mit der Handykamera oder tippen den Code bei „Spiel beitreten“ ein.</span></li>
+        <li><span><b>Jeder spielt auf dem eigenen Handy</b> – antworten, Punkte setzen, gewinnen.</span></li></ol></div>
+      <div class="grow"></div></div></div>`;
 }
 
 function menuView() {
@@ -601,7 +764,7 @@ const tileStatus = p => [ID && p.id === ID.playerId ? 'du' : '', p.is_admin ? 'A
 const tileHtml = p => `<div class="tile" data-pid="${p.id}">${av(p.avatar)}
       <div class="nm">${esc(p.nickname)}</div>
       <div class="st ${p.is_ready ? 'ready' : ''}">${tileStatus(p)}</div>
-      ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="A.kick('${p.id}')">×</button>` : ''}</div>`;
+      ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="askKick('${p.id}')">×</button>` : ''}</div>`;
 /* Lobby ohne Neuzeichnen aktualisieren: Kacheln einfügen/entfernen/umsortieren, Status ändern.
    Bilder bleiben im DOM – es flackert nichts, wenn andere beitreten oder „bereit“ drücken. */
 function patchLobby() {
@@ -619,11 +782,44 @@ function patchLobby() {
     const cur = box.children[i]; if (cur !== el) box.insertBefore(el, cur || null);
   });
   have.forEach(e => e.remove());
-  const c = $('#pcount'); if (c) c.textContent = `${S.players.length} Spieler`;
+  const c = $('#pcount'); if (c) c.textContent = lobbyCount();
+  const sc = $('#lobbyStatus'); if (sc) { const h = lobbyStatus(); if (sc.innerHTML !== h) sc.innerHTML = h; if (isAdmin()) sc.classList.toggle('ok', !notReady().length && S.players.length >= S.settings.min_players); }
+  const sb2 = $('#startBtn'); if (sb2) sb2.textContent = startLabel();
   box.style.setProperty('--tvk', tvkFor(S.players.length));
   const need = S.settings.min_players, sb = $('#startBtn'), sh = $('#startHint');
   if (sb) sb.disabled = S.players.length < need;
   if (sh) sh.hidden = S.players.length >= need;
+}
+
+const notReady = () => S.players.filter(p => !p.is_admin && !p.is_ready);
+const lobbyCount = () => { const r = S.players.filter(p => p.is_admin || p.is_ready).length; return `${S.players.length} Spieler · ${r} bereit`; };
+const startLabel = () => { const n = notReady().length; return n ? `Spiel starten (${n} noch nicht bereit)` : 'Spiel starten – alle bereit'; };
+const adminName = () => { const a = S.players.find(p => p.is_admin); return a ? esc(a.nickname) : 'der Admin'; };
+function lobbyStatus() {
+  const m = me();
+  if (isAdmin()) {
+    const n = notReady();
+    if (S.players.length < S.settings.min_players) return `<span class="ic">👋</span><div><b>Warte auf Mitspieler</b>Zeig den QR-Code herum – die anderen scannen ihn mit der Handykamera.</div>`;
+    return n.length ? `<span class="ic">⏳</span><div><b>Noch nicht bereit: ${n.map(p => esc(p.nickname)).join(', ')}</b>${n.length === 1 ? 'Liest' : 'Lesen'} vielleicht noch die Anleitung.</div>`
+      : `<span class="ic">🚀</span><div><b>Alle sind bereit!</b>Du kannst das Spiel jetzt starten.</div>`;
+  }
+  if (!m) return '';
+  return m.is_ready ? `<span class="ic">✅</span><div><b>Du bist bereit</b>${adminName()} startet das Spiel, sobald alle da sind.</div>`
+    : `<span class="ic">👉</span><div><b>Fast geschafft</b>Tippe unten auf „Ich bin bereit“, damit ${adminName()} weiß, dass du startklar bist.</div>`;
+}
+/* Rückfragen (Start trotz nicht bereiter Spieler, Spieler entfernen) */
+function askKick(id) { const p = pl(id); ui.ask = { type: 'kick', id, name: p ? p.nickname : '' }; render(true); }
+function askStart() { if (notReady().length) { ui.ask = { type: 'start' }; render(true); } else A.start(); }
+const closeAsk = () => { ui.ask = null; render(true); };
+function askView() {
+  if (!ui.ask || !S) return '';
+  let h = '';
+  if (ui.ask.type === 'kick') h = `<h2>${esc(ui.ask.name)} entfernen?</h2><p class="hint" style="margin:0">Die Person kann mit dem Code wieder beitreten.</p>
+    <button class="btn danger" onclick="const id=ui.ask.id;ui.ask=null;A.kick(id)">Ja, entfernen</button><button class="btn ghost" onclick="closeAsk()">Abbrechen</button>`;
+  if (ui.ask.type === 'start') { const n = notReady();
+    h = `<h2>Trotzdem starten?</h2><p class="hint" style="margin:0">${n.map(p => esc(p.nickname)).join(', ')} ${n.length === 1 ? 'hat' : 'haben'} noch nicht auf „Bereit“ getippt und ${n.length === 1 ? 'liest' : 'lesen'} vielleicht noch die Anleitung. Sie spielen trotzdem mit.</p>
+    <button class="btn" onclick="ui.ask=null;A.start()">Jetzt starten</button><button class="btn ghost" onclick="closeAsk()">Noch kurz warten</button>`; }
+  return `<div class="scrim" onclick="if(event.target===this)closeAsk()"><div class="menu">${h}</div></div>`;
 }
 
 /* ---------- Tutorial (vor dem „Bereit“) ---------- */
@@ -634,38 +830,57 @@ function tutOpen() { ui.tutOpen = true; ui.tutStep = 0; render(true); window.scr
 function tutGo(d) { ui.tutStep = Math.max(0, Math.min(tutSteps().length - 1, ui.tutStep + d)); render(true); window.scrollTo(0, 0); }
 function tutDone() { try { sessionStorage.setItem(tutKey(), '1'); } catch {} ui.tutOpen = false; ui.tutStep = 0; render(true); window.scrollTo(0, 0); }
 function tutSteps() {
-  const c = S.settings, j = c.jokers;
+  const c = S.settings, j = c.jokers, sp = c.start_points, ex = Math.max(1, Math.round(sp * .4));
   return [
-    { icon: '🎲', title: 'So läuft ein Spiel', body: `<p>Alle spielen gleichzeitig. Jede Frage hat vier Antworten (A–D) und <b>${c.answer_seconds} Sekunden</b> Zeit.</p><p>Es gibt <b>${c.question_count} Fragen</b>. Wer am Ende die meisten Punkte hat, gewinnt. Du startest mit <b>${c.start_points} Punkten</b>.</p>` },
-    { icon: '🎯', title: 'Dein geheimer Einsatz', body: `<p>Vor dem Absenden setzt du Punkte ein: von 0 bis zu allen, die du hast. Die anderen sehen deinen Einsatz erst bei der Auflösung.</p><div class="ex"><b>Beispiel:</b> Du hast 10 Punkte und setzt 4.<br>Richtig: <span class="pos"><b>14 Punkte</b></span> · Falsch: <span class="neg"><b>6 Punkte</b></span></div><p>Alles setzen (All-in) bringt am meisten – kann dich aber auf 0 bringen.</p>` },
-    { icon: '✅', title: 'Antworten & bestätigen', body: `<p>Wähle eine Antwort, stelle deinen Einsatz ein und tippe auf <b>Antwort bestätigen</b>. Danach ist alles endgültig.</p><p>Schaffst du es nicht rechtzeitig, zählt die Frage als falsch – aber ohne Einsatz, du verlierst also nichts.</p>` },
-    { icon: '⭐', title: 'Joker', body: `<ul class="tl"><li><b>50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Runde)</li><li><b>Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>Han Solo</b> – +${c.han_solo_bonus} Bonus, wenn nur du richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>Netz</b> – bei einer falschen Antwort verlierst du nur die Hälfte (${j.safety_net}×)</li></ul><p class="hint">Pro Frage sind höchstens ${c.max_jokers_per_question} Joker erlaubt.</p>` },
-    { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du die richtige Antwort, was die anderen gesetzt haben und die Rangliste. Tippe auf <b>Weiter</b>, wenn es weitergehen kann – es geht los, sobald alle bereit sind.</p><p>Hast du 0 Punkte, spielst du ohne Einsatz weiter mit und musst nicht auf „Weiter“ tippen.</p>` },
+    { icon: '🎲', title: 'So läuft ein Spiel', body: `<p>Alle spielen gleichzeitig, jeder auf dem eigenen Handy. Es gibt <b>${c.question_count} Fragen</b> mit je vier Antworten und <b>${c.answer_seconds} Sekunden</b> Zeit.</p><p class="hint" style="margin:0 0 6px">Beispiel: Was ist die Hauptstadt von Italien?</p><div class="mock"><span>A. Mailand</span><span class="sel">B. Rom ✓</span><span>C. Neapel</span><span>D. Turin</span></div><p>Du startest mit <b>${sp} Punkten</b>. Wer am Ende die meisten hat, gewinnt.</p>` },
+    { icon: '🎯', title: 'Dein geheimer Einsatz', body: `<p>Bei jeder Frage setzt du Punkte – von 0 bis alle, die du hast. Die anderen sehen deinen Einsatz erst bei der Auflösung.</p>
+      <div class="try"><b>Probier's aus:</b> Du hast ${sp} Punkte und setzt <b class="ticker" id="tryV">${ex}</b>.
+        <input type="range" min="0" max="${sp}" value="${ex}" oninput="tutTry(this.value, ${sp})" aria-label="Beispiel-Einsatz">
+        <div class="res"><span>Richtig → <b class="pos" id="tryW">${sp + ex}</b></span><span>Falsch → <b class="neg" id="tryL">${sp - ex}</b></span></div></div>
+      <p>Bist du dir sicher, setz viel. Bist du unsicher, setz wenig oder 0 – dann kannst du nichts verlieren.</p>` },
+    { icon: '✅', title: 'Antworten & bestätigen', body: `<ul class="tl"><li><b>1.</b> Antwort antippen</li><li><b>2.</b> Einsatz mit <b>−</b> / <b>+</b> einstellen</li><li><b>3.</b> Unten auf <b>Bestätigen</b> tippen – danach ist alles endgültig</li></ul><p>Läuft die Zeit ab, bevor du bestätigst, zählt die Frage als falsch – aber ohne Einsatz, du verlierst also nichts.</p>` },
+    { icon: '🃏', title: 'Joker', body: `<p>Jeden Joker hast du nur begrenzt – setz ihn klug ein.</p><ul class="tl"><li><b>½ 50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Spiel)</li><li><b>👥 Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>⭐ Han Solo</b> – +${c.han_solo_bonus} Bonuspunkte, wenn <i>nur du</i> richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>🛟 Netz</b> – liegst du falsch, verlierst du nur die Hälfte deines Einsatzes (${j.safety_net}×)</li></ul><p class="hint">50:50 und Gruppe wirken sofort (zweimal antippen). Han Solo und Netz werden zusammen mit der Antwort abgeschickt. Höchstens ${c.max_jokers_per_question} Joker pro Frage.</p>` },
+    { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du sofort, ob du richtig lagst, wer was gewählt hat und wie sich die Rangliste verändert.</p><p>Tippe dann auf <b>Weiter</b> – die nächste Frage kommt, sobald alle bereit sind.</p><p class="hint">Mit 0 Punkten bist du nicht raus: Du spielst ohne Einsatz weiter mit.</p>` },
   ];
 }
+function tutTry(v, sp) { v = Number(v); $('#tryV').textContent = v; $('#tryW').textContent = sp + v; $('#tryL').textContent = sp - v; }
+/* Wischen im Tutorial (links = weiter, rechts = zurück) */
+let swipeX = null;
+document.addEventListener('touchstart', e => { swipeX = tutActive() && e.target.type !== 'range' ? e.touches[0].clientX : null; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (swipeX === null || !tutActive()) return;
+  const dx = e.changedTouches[0].clientX - swipeX; swipeX = null;
+  if (Math.abs(dx) > 60) { if (dx < 0 && ui.tutStep < tutSteps().length - 1) tutGo(1); else if (dx > 0 && ui.tutStep > 0) tutGo(-1); }
+}, { passive: true });
 function tutorialView() {
   const steps = tutSteps(), i = Math.min(ui.tutStep, steps.length - 1), st = steps[i], last = i === steps.length - 1;
   return `<div class="screen"><div class="hero"><div class="topbar"><span style="width:96px"></span><div class="mid">Spielanleitung</div><button class="link" style="color:#fff;width:96px;font-size:14px;text-align:right" onclick="tutDone()">Überspringen</button></div>
     <div class="meta" style="margin-top:18px"><span>Schritt ${i + 1} von ${steps.length}</span></div><h1 class="q">${st.title}</h1></div>
     <div class="sheet"><div class="tut-ic">${st.icon}</div><div class="tut-body">${st.body}</div>
       <div class="dots">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div><div class="grow"></div>
-      <div class="actions">${last ? '<button class="btn" onclick="tutDone()">Verstanden – zur Lobby</button>' : '<button class="btn" onclick="tutGo(1)">Weiter</button>'}${i > 0 ? '<button class="btn ghost" onclick="tutGo(-1)">Zurück</button>' : ''}</div></div></div>`;
+      <div class="actions">${last ? '<button class="btn" onclick="tutDone()">Verstanden – los geht\'s</button>' : '<button class="btn" onclick="tutGo(1)">Weiter</button>'}${i > 0 ? '<button class="btn ghost" onclick="tutGo(-1)">Zurück</button>' : ''}</div></div></div>`;
 }
 
 function lobbyView() {
   const cfg = S.settings, m = me(), tv = isTV();
   const tiles = S.players.map(tileHtml).join('');
   const share = `<div class="qr">${qrSvg(joinUrl())}<div class="url">${esc(joinUrl())}</div></div>`;
-  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
+  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s pro Frage</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
   const need = cfg.min_players;
   const action = isAdmin()
-    ? `<button class="btn" id="startBtn" onclick="A.start()" ${S.players.length < need ? 'disabled' : ''}>Spiel starten</button><div class="hint" id="startHint" style="text-align:center" ${S.players.length < need ? '' : 'hidden'}>Mindestens ${need} Spieler nötig</div>`
-    : tv ? '<div class="hint" style="text-align:center;width:100%">Warte auf den Start …</div>'
-    : `<button class="btn ${m && m.is_ready ? 'ghost' : ''}" onclick="A.ready(${m && m.is_ready ? 'false' : 'true'})">${m && m.is_ready ? 'Doch nicht bereit' : 'Ich bin bereit'}</button>`;
+    ? `<button class="btn" id="startBtn" onclick="askStart()" ${S.players.length < need ? 'disabled' : ''}>${startLabel()}</button><div class="hint" id="startHint" style="text-align:center" ${S.players.length < need ? '' : 'hidden'}>Mindestens ${need} Spieler nötig</div>`
+    : tv ? `<div class="hint" style="text-align:center;width:100%;font-size:clamp(16px,1.3vw,26px)">Das Spiel startet, sobald ${adminName()} auf „Spiel starten“ tippt.</div>`
+    : m && m.is_ready ? `<button class="btn ghost small" onclick="A.ready(false)">Doch noch nicht bereit</button>`
+    : `<button class="btn" onclick="A.ready(true)">Ich bin bereit</button>`;
   const hero = `<div class="hero">${topbar('Lobby')}<div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>`;
   const tvk = tvkFor(S.players.length);
-  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0"><span id="pcount">${S.players.length} Spieler</span></h3><div class="tiles" id="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
-  return `<div class="screen">${hero}<div class="sheet">${share}<div><h3 class="f"><span id="pcount">${S.players.length} Spieler</span></h3><div class="tiles" id="tiles">${tiles}</div></div>${chips}<button class="link" onclick="tutOpen()">Spielanleitung ansehen</button><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  const host = location.host + location.pathname.replace(/index\.html$/, '');
+  const tvHero = `<div class="hero">${topbar('Lobby')}<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:4vw;flex-wrap:wrap"><div><div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>
+    <div class="tvjoin"><b>So machst du mit:</b><br>📷 Handykamera auf den QR-Code richten – oder<br><b>${esc(host)}</b> öffnen und Code <b>${esc(S.code)}</b> eingeben</div></div></div>`;
+  if (tv) return `<div class="screen">${tvHero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0"><span id="pcount">${lobbyCount()}</span></h3><div class="tiles" id="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}${askView()}</div>`;
+  const status = `<div class="status ${(m && m.is_ready) || (isAdmin() && !notReady().length && S.players.length >= need) ? 'ok' : ''}" id="lobbyStatus">${lobbyStatus()}</div>`;
+  const invite = isAdmin() ? share : `<details class="invite"><summary>➕ Weitere Mitspieler einladen</summary>${share}</details>`;
+  return `<div class="screen">${hero}<div class="sheet">${status}${invite}<div><h3 class="f"><span id="pcount">${lobbyCount()}</span></h3><div class="tiles" id="tiles">${tiles}</div></div>${chips}<button class="link" onclick="tutOpen()">Spielanleitung nochmal ansehen</button><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}${askView()}</div>`;
 }
 
 const ownResult = () => S.reveal && ID && S.reveal.results.find(r => r.player_id === ID.playerId);
@@ -675,7 +890,8 @@ function answerList(mode) {   // 'pick' | 'locked' | 'reveal'
   const gm = used.group_opinion;
   const sub = M && M.submission;
   const mine = mode === 'reveal' ? ownResult() : null;
-  return `<div class="answers">${['A', 'B', 'C', 'D'].map(l => {
+  const voters = mode === 'reveal' ? S.reveal.results.reduce((o, r) => { if (r.answer) (o[r.answer] = o[r.answer] || []).push(r.player_id); return o; }, {}) : {};
+  return `<div class="answers">${['A', 'B', 'C', 'D'].map((l, i) => {
     let cls = 'ans', dis = mode === 'pick' ? '' : 'disabled', badge = '';
     if (mode === 'pick') { if (removed.includes(l)) { cls += ' gone'; dis = 'disabled'; } if (ui.answer === l) cls += ' sel'; if (gm) badge = `<span class="cnt">${gm[l]}×</span>`; }
     if (mode === 'locked') { if (sub && sub.answer === l) cls += ' sel'; if (removed.includes(l)) cls += ' gone'; }
@@ -683,8 +899,10 @@ function answerList(mode) {   // 'pick' | 'locked' | 'reveal'
       if (l === S.reveal.correct_answer) cls += ' right';
       else if (mine && mine.answer === l) cls += ' wrong';
       badge = `<span class="cnt">${S.reveal.distribution[l]}×</span>`;
+      const v = (voters[l] || []).map(pl).filter(Boolean);
+      if (v.length) { cls += ' has-v'; badge += `<span class="voters">${v.slice(0, 8).map(p => av(p.avatar)).join('')}</span>`; }
     }
-    return `<button class="${cls}" data-l="${l}" ${dis} onclick="pick('${l}')"><b>${l}.</b><span>${esc(S.question.answers[l])}</span>${badge}${CHECK}</button>`;
+    return `<button class="${cls}" style="--i:${i}" data-l="${l}" ${dis} onclick="pick('${l}')"><b>${l}.</b><span>${esc(S.question.answers[l])}</span>${badge}${CHECK}</button>`;
   }).join('')}</div>`;
 }
 
@@ -693,14 +911,14 @@ function jokerBox() {
   const maxQ = S.settings.max_jokers_per_question;
   const usedCount = Object.keys(used).length + (ui.joker ? 1 : 0);
   const inst = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || !!used[key] || usedCount >= maxQ;
-    return `<button class="jk ${used[key] ? 'on' : ''}" ${dis ? 'disabled' : ''} onclick="A.joker('${key}')"><span class="n">${n}</span><i>${icon}</i>${label}</button>`; };
+    return `<button class="jk ${used[key] ? 'on' : ''}" data-ij="${key}" data-label="${label}" ${dis ? 'disabled' : ''} onclick="armJoker('${key}')"><span class="n">${n}</span><i>${icon}</i><span class="lb">${used[key] ? 'benutzt' : label}</span></button>`; };
   const tog = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || (usedCount >= maxQ && ui.joker !== key) || (key === 'safety_net' && ui.stake === 0 && ui.joker !== key);
     return `<button class="jk ${ui.joker === key ? 'on' : ''}" data-jk="${key}" ${dis ? 'disabled' : ''} onclick="setJoker('${key}')"><span class="n">${n}</span><i>${icon}</i>${label}</button>`; };
   const gm = used.group_opinion;
   return `<div class="box"><h3>Joker <span style="text-transform:none;letter-spacing:0">· max. ${maxQ} pro Frage</span></h3>
     <div class="jokers">${inst('fifty_fifty', '½', '50:50')}${inst('group_opinion', '👥', 'Gruppe')}${tog('han_solo', '⭐', 'Han Solo')}${tog('safety_net', '🛟', 'Netz')}</div>
     ${gm ? `<p class="hint" style="margin:10px 0 0">Gruppe (bisher ${gm.total} Antworten): A ${gm.A} · B ${gm.B} · C ${gm.C} · D ${gm.D}</p>` : ''}
-    <p class="hint" style="margin:10px 0 0">Han Solo: +${S.settings.han_solo_bonus}, wenn nur du richtig liegst (ab ${S.settings.han_solo_min_players} Spielern). Netz: halber Verlust.</p></div>`;
+    <p class="hint" style="margin:10px 0 0" id="jkHint">½ und 👥 wirken sofort (zweimal tippen). ⭐ Han Solo: +${S.settings.han_solo_bonus}, wenn nur du richtig liegst (ab ${S.settings.han_solo_min_players} Spielern). 🛟 Netz: nur halber Verlust.</p></div>`;
 }
 function stakeBox() {
   const pts = M.points;
@@ -715,72 +933,149 @@ function stakeBox() {
     <div class="chips">${chips.map(v => `<button class="chip ${ui.stake === v ? 'on' : ''}" data-chip="${v}" onclick="setStake(${v})">${v === pts ? 'All-in' : v === 0 ? 'Kein Einsatz' : 'Hälfte'}</button>`).join('')}</div></div>`;
 }
 function answeredStrip() {
-  const req = S.players.filter(p => p.required), s = isTV() ? 64 : 40;
-  return `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${req.map(p => `<span class="avwrap" data-pa="${p.id}">${av(p.avatar, s, p.answered ? '<span class="ok">✓</span>' : '')}</span>`).join('')}</div>`;
+  const req = S.players.filter(p => p.required), sz = isTV() ? 72 : 44;
+  return `<div class="strip">${req.map(p => `<span class="who ${p.answered ? '' : 'wait'}" data-pa="${p.id}">${av(p.avatar, sz, p.answered ? '<span class="ok">✓</span>' : '')}<small>${esc(p.nickname)}</small></span>`).join('')}</div>`;
 }
+const waitingFor = () => { const w = S.players.filter(p => p.required && !p.answered); return !w.length ? 'Alle haben geantwortet – gleich kommt die Auflösung.' : w.length <= 3 ? `Noch offen: ${w.map(p => esc(p.nickname)).join(', ')}` : `Noch ${w.length} Spieler am Überlegen …`; };
 const answeredCount = () => { const req = S.players.filter(p => p.required); return `${req.filter(p => p.answered).length} / ${req.length}`; };
 
 function questionView() {
-  const q = S.question, tv = isTV();
-  const hero = `<div class="hero">${topbar(esc(q.category || ''))}
-    <div class="meta"><span>Frage ${String(S.progress.current).padStart(2, '0')}</span><span class="timer" id="timer"><span id="tt">--:--</span> ⏳</span></div>
+  const q = S.question, tv = isTV(), m = me();
+  const mine = m && !tv ? `<span class="mine">Du: ${m.points} P. · Platz ${m.rank}</span>` : `<span>Frage ${S.progress.current} von ${S.progress.total}</span>`;
+  const hero = `<div class="hero">${topbar(esc(q.category || '') + (tv ? '' : ` · Frage ${S.progress.current}/${S.progress.total}`))}
+    <div class="meta">${mine}<span class="timer" id="timer"><span id="tt">${mmss(secsLeft(S.deadline))}</span> ⏳</span></div>
+    <div class="tbar"><i id="tbar" style="transform:scaleX(${barScale()})"></i></div>
     <h1 class="q">${esc(q.text)}</h1></div>`;
-  if (tv) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}<div class="grow"></div>
-    <div><h3 class="f" style="text-align:center">Geantwortet <span id="answered">${answeredCount()}</span></h3>${answeredStrip()}</div>
+  const waitBox = `<div><h3 class="f" style="text-align:center">Geantwortet · <span id="answered">${answeredCount()}</span></h3>${answeredStrip()}<div class="waitmsg" id="waitmsg">${waitingFor()}</div></div>`;
+  if (tv) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}<div class="grow"></div>${waitBox}
     ${progressBar()}<div class="actions" style="min-height:10px"></div></div>${menuView()}</div>`;
   const sub = M.submission;
   if (sub) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}
-    <div class="note">Abgegeben: <b>${sub.answer}</b> · Einsatz <b>${sub.stake}</b>${sub.joker ? ` · ${sub.joker === 'han_solo' ? 'Han Solo' : 'Sicherheitsnetz'}` : ''}</div>
-    <div><h3 class="f" style="text-align:center">Warte auf die anderen · <span id="answered">${answeredCount()}</span></h3>${answeredStrip()}</div>
-    ${progressBar()}<div class="grow"></div><div class="actions"><button class="btn" disabled>Antwort abgegeben</button></div></div>${menuView()}</div>`;
-  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}${stakeBox()}${jokerBox()}${progressBar()}<div class="grow"></div>
-    <div class="actions"><button class="btn" onclick="A.submit()">Antwort bestätigen</button></div></div>${menuView()}</div>`;
+    <div class="status ok"><span class="ic">🔒</span><div><b>Antwort ${sub.answer} ist abgegeben</b>Einsatz ${sub.stake} ${sub.stake === 1 ? 'Punkt' : 'Punkte'}${sub.joker ? ` · ${sub.joker === 'han_solo' ? '⭐ Han Solo' : '🛟 Sicherheitsnetz'}` : ''} – jetzt heißt es warten.</div></div>
+    ${waitBox}${progressBar()}<div class="grow"></div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}<div class="hint" style="text-align:center;margin:-6px 0 -4px">Schon geantwortet: <b id="answered">${answeredCount()}</b></div>${stakeBox()}${jokerBox()}${progressBar()}<div class="grow"></div>
+    <div class="actions"><button class="btn ${ui.answer ? '' : 'wait'}" id="submitBtn" onclick="A.submit()">${submitTxt()}</button></div></div>${menuView()}</div>`;
 }
 
+/* Vorheriger Stand aus der Auflösung zurückrechnen (Punkte − Änderung) → Platzwechsel ohne gespeicherten Verlauf */
+function prevRanks() {
+  const ch = Object.fromEntries(S.reveal.results.map(r => [r.player_id, r.change || 0]));
+  const prev = S.players.map(p => ({ id: p.id, pts: p.points - (ch[p.id] || 0), nm: p.nickname.toLowerCase() }))
+    .sort((a, b) => b.pts - a.pts || a.nm.localeCompare(b.nm));
+  const out = {}; prev.forEach((p, i) => { out[p.id] = { rank: i && prev[i - 1].pts === p.pts ? out[prev[i - 1].id].rank : i + 1, pts: p.pts, idx: i }; });
+  return out;
+}
 function rankRows() {
-  const res = Object.fromEntries(S.reveal.results.map(r => [r.player_id, r]));
-  return `<div class="rows">${S.players.map(p => {
-    const r = res[p.id];
-    const sub = r ? (r.timed_out ? 'Zeit abgelaufen' : `${r.answer} · Einsatz ${r.stake}${r.joker ? ' · ' + (r.joker === 'han_solo' ? 'Han Solo' : 'Netz') : ''}`) : '';
-    return `<div class="row ${ID && p.id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
-      <div class="nm">${esc(p.nickname)}${p.points === 0 ? '<span class="zbadge">0 Punkte</span>' : ''}<small>${esc(sub)}</small></div>
-      <div class="pts">${p.points}${r ? `<small class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : 'zero'}">${sgn(r.change)}${r.bonus ? ' ★' : ''}</small>` : ''}</div></div>`;
+  const res = Object.fromEntries(S.reveal.results.map(r => [r.player_id, r])), prev = prevRanks();
+  const allTied = new Set(Object.values(prev).map(x => x.pts)).size < 2;   // z. B. nach Frage 1: vorher alle gleich → keine Pfeile
+  return `<div class="rows" id="rankRows">${S.players.map(p => {
+    const r = res[p.id], pr = prev[p.id], move = pr && !allTied ? pr.rank - p.rank : 0;
+    const sub = r ? (r.timed_out ? 'Zeit abgelaufen' : `${r.answer} · Einsatz ${r.stake}${r.joker ? ' · ' + (r.joker === 'han_solo' ? '⭐ Han Solo' : '🛟 Netz') : ''}`) : '';
+    return `<div class="row ${ID && p.id === ID.playerId ? 'me' : ''} ${p.required && p.is_ready ? 'isready' : ''}" data-rid="${p.id}" data-prev="${pr ? pr.idx : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
+      <div class="nm">${esc(p.nickname)}${move > 0 ? `<span class="ch up">▲${move}</span>` : move < 0 ? `<span class="ch down">▼${-move}</span>` : ''}${p.points === 0 ? '<span class="zbadge">0 Punkte</span>' : ''}<span class="rdy" title="hat auf Weiter getippt">✓ weiter</span><small>${esc(sub)}</small></div>
+      <div class="pts"><span class="ticker" data-from="${pr ? pr.pts : p.points}" data-to="${p.points}">${p.points}</span>${r ? `<small class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : 'zero'}">${sgn(r.change)}${r.bonus ? ' ★' : ''}</small>` : ''}</div></div>`;
   }).join('')}</div>`;
 }
+const revealWaiting = () => { const w = S.players.filter(p => p.required && !p.is_ready); return !w.length ? 'Alle bereit – es geht weiter …' : w.length <= 3 ? `Warten auf ${w.map(p => esc(p.nickname)).join(', ')}` : `Warten auf ${w.length} Spieler`; };
 function revealView() {
   const q = S.question, rv = S.reveal, tv = isTV();
   const mine = ownResult(), m = me();
-  const hero = `<div class="hero">${topbar('Auflösung')}
-    <div class="meta"><span>Frage ${String(S.progress.done).padStart(2, '0')}</span>${S.ready_deadline ? '<span class="timer" id="timer"><span id="tt">--:--</span></span>' : '<span></span>'}</div>
-    <h1 class="q" ${tv ? '' : 'style="font-size:24px"'}>${esc(q.text)}</h1></div>`;
-  const banner = mine ? `<div class="banner ${mine.change > 0 ? 'ok' : mine.change < 0 ? 'bad' : 'zero'}">${av(m && m.avatar, 56)}
-    <div><div class="t ${mine.change > 0 ? 'pos' : mine.change < 0 ? 'neg' : ''}">${mine.timed_out ? 'Zeit abgelaufen' : mine.correct ? 'Richtig!' : 'Leider falsch'} · ${sgn(mine.change)}</div>
-    ${mine.bonus ? `<div class="hint">inkl. Han-Solo-Bonus ${mine.bonus}</div>` : ''}</div></div>` : '';
+  const hero = `<div class="hero">${topbar('Auflösung · Frage ' + S.progress.done + '/' + S.progress.total)}
+    <div class="meta"><span>${tv ? 'Richtig ist ' + rv.correct_answer : ''}</span>${S.ready_deadline ? `<span class="timer" id="timer"><span id="tt">${mmss(secsLeft(S.ready_deadline))}</span></span>` : '<span></span>'}</div>
+    <h1 class="q small" ${tv ? '' : 'style="font-size:24px"'}>${esc(q.text)}</h1></div>`;
+  let banner = '';
+  if (mine && m) {
+    const title = mine.timed_out ? 'Zeit abgelaufen' : mine.correct ? (mine.bonus ? 'Han Solo!' : 'Richtig!') : 'Leider falsch';
+    const detail = mine.timed_out ? 'Kein Einsatz – du verlierst nichts.' : mine.change === 0 ? (mine.correct ? 'Ohne Einsatz – keine Punkte.' : 'Ohne Einsatz – nichts verloren.') : `${sgn(mine.change)} ${Math.abs(mine.change) === 1 ? 'Punkt' : 'Punkte'}${mine.bonus ? ` (inkl. ${mine.bonus} Bonus)` : ''}${mine.joker === 'safety_net' && !mine.correct ? ' – das Netz hat die Hälfte gerettet' : ''}`;
+    banner = `<div class="banner ${mine.change > 0 || (mine.correct && !mine.change) ? 'ok' : mine.change < 0 ? 'bad' : 'zero'}">${av(m.avatar, 56)}
+      <div style="flex:1"><div class="t ${mine.change > 0 ? 'pos' : mine.change < 0 ? 'neg' : ''}">${title}</div><div class="hint" style="color:var(--text)">${detail}</div>
+      <div class="hint">Jetzt <b class="ticker" data-from="${m.points - (mine.change || 0)}" data-to="${m.points}">${m.points}</b> Punkte · Platz ${m.rank} von ${S.players.length}</div></div></div>`;
+  }
   const required = m && m.required;
-  const waiting = S.players.filter(p => p.required && !p.is_ready).length;
-  const action = tv ? `<div class="hint" style="text-align:center;width:100%">Warten auf <span id="waiting">${waiting}</span> Spieler</div>`
-    : required ? `<button class="btn ${M.is_ready ? 'ghost' : ''}" onclick="A.ready(${M.is_ready ? 'false' : 'true'})">${M.is_ready ? 'Warte … (zurücknehmen)' : 'Weiter'}</button><div class="hint" style="text-align:center">Warten auf <span id="waiting">${waiting}</span> Spieler</div>`
-    : '<div class="note">Du hast 0 Punkte und musst nicht auf „Weiter“ drücken – du kannst trotzdem zuschauen.</div>';
-  return `<div class="screen">${hero}<div class="sheet">${answerList('reveal')}${rv.explanation ? `<div class="note">💡 ${esc(rv.explanation)}</div>` : ''}${tv ? '' : banner}
+  const action = tv ? `<div class="hint" style="text-align:center;width:100%;font-size:clamp(16px,1.3vw,26px)" id="waiting">${revealWaiting()}</div>`
+    : required ? `<button class="btn ${M.is_ready ? 'ghost' : ''}" onclick="A.ready(${M.is_ready ? 'false' : 'true'})">${M.is_ready ? 'Warte auf die anderen … (zurücknehmen)' : S.progress.done >= S.progress.total ? 'Zum Endergebnis' : 'Weiter zur nächsten Frage'}</button><div class="hint" style="text-align:center" id="waiting">${revealWaiting()}</div>`
+    : '<div class="note">Du hast 0 Punkte und musst nicht auf „Weiter“ tippen – schau einfach zu.</div>';
+  const expl = rv.explanation ? `<div class="note">💡 ${esc(rv.explanation)}</div>` : '';
+  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="revcols"><div style="display:flex;flex-direction:column;gap:2vh">${answerList('reveal')}${expl}</div>
+    <div><h3 class="f" style="margin-top:0">Rangliste</h3>${rankRows()}</div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${banner}${answerList('reveal')}${expl}
     <div><h3 class="f">Rangliste</h3>${rankRows()}</div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
 }
 
+function awards(f) {
+  const top = (key, dir) => { const v = f.filter(p => p[key] != null && (dir > 0 ? p[key] > 0 : p[key] < 0)); if (!v.length) return null;
+    const best = v.reduce((a, b) => (dir > 0 ? b[key] > a[key] : b[key] < a[key]) ? b : a); return best; };
+  const out = [], acc = f.filter(p => p.answered).reduce((a, b) => (!a || b.correct > a.correct ? b : a), null);
+  const bw = top('best_win', 1), wl = top('worst_loss', -1), jk = top('jokers_used', 1);
+  if (acc && acc.correct) out.push(['🎯', 'Treffsicher', `${esc(acc.nickname)} · ${acc.correct} richtig`]);
+  if (bw) out.push(['💰', 'Größter Coup', `${esc(bw.nickname)} · +${bw.best_win}`]);
+  if (wl) out.push(['🎢', 'Mutigster Absturz', `${esc(wl.nickname)} · ${wl.worst_loss}`]);
+  if (jk) out.push(['🃏', 'Joker-Fan', `${esc(jk.nickname)} · ${jk.jokers_used} Joker`]);
+  return out;
+}
 function finishedView() {
-  const f = S.final, win = f.filter(p => p.rank === 1), w = win[0];
+  const f = S.final, tv = isTV(), mine = ID && f.find(p => p.player_id === ID.playerId);
+  const podium = [f[1], f[0], f[2]].map((p, i) => p ? `<div class="pl p${[2, 1, 3][i]}">${avFull(p.avatar)}<div class="nm">${esc(p.nickname)}</div><div class="pt">${p.points} Punkte</div><div class="blk">${p.rank}</div></div>` : '<div class="pl"></div>').join('');
+  const ties = f.filter(p => p.rank === 1);
+  const head = ties.length > 1 ? `🏆 Gleichstand: ${ties.map(p => esc(p.nickname)).join(' &amp; ')}` : f[0] ? `🏆 ${esc(f[0].nickname)} gewinnt!` : 'Spiel beendet';
+  const hero = `<div class="hero">${topbar('Spiel beendet')}<h1 class="q" style="text-align:center;margin-top:10px;font-size:${tv ? '' : '26px'}">${head}</h1><div class="podium">${podium}</div></div>`;
+  const myNote = mine ? `<div class="status ${mine.rank === 1 ? 'ok' : ''}"><span class="ic">${mine.rank === 1 ? '🥇' : mine.rank === 2 ? '🥈' : mine.rank === 3 ? '🥉' : '🎉'}</span><div><b>Du bist auf Platz ${mine.rank} von ${f.length}</b>${mine.points} Punkte · ${mine.correct} von ${mine.answered} richtig</div></div>` : '';
+  const aw = awards(f);
   const tl = a => a.map(x => (x > 0 ? '+' : '') + x).join(' ');
-  const hero = `<div class="hero">${topbar('Spiel beendet')}<div class="winner">${w ? `<div class="sub" style="margin-top:10px">🏆 Sieger</div>${avFull(w.avatar)}<div class="name">${win.map(p => esc(p.nickname)).join(' &amp; ')}</div><div class="pts">${w.points} Punkte</div>` : ''}</div></div>`;
-  return `<div class="screen">${hero}<div class="sheet"><div class="rows">${f.map(p => `<div class="row ${ID && p.player_id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
-    <div class="nm">${esc(p.nickname)}<small>${p.correct} von ${p.answered} richtig</small></div><div class="pts">${p.points}</div></div>`).join('')}</div>
-    <details class="set"><summary>Details</summary>${f.map(p => `<div style="padding:8px 0;border-top:1px solid var(--line)"><b>${esc(p.nickname)}</b>
+  return `<div class="screen">${hero}<div class="sheet">${myNote}
+    ${aw.length ? `<div class="awards">${aw.map((x, i) => `<div class="award" style="--i:${i}"><i>${x[0]}</i> ${x[1]}<b>${x[2]}</b></div>`).join('')}</div>` : ''}
+    <div class="fin"><h3 class="f">Endstand</h3><div class="rows">${f.map(p => `<div class="row ${ID && p.player_id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
+    <div class="nm">${esc(p.nickname)}<small>${p.correct} von ${p.answered} richtig</small></div><div class="pts">${p.points}</div></div>`).join('')}</div></div>
+    <details class="set"><summary>Verlauf aller Spieler</summary>${f.map(p => `<div style="padding:8px 0;border-top:1px solid var(--line)"><b>${esc(p.nickname)}</b>
       <div class="hint">Bester Gewinn ${p.best_win ?? '–'} · Größter Verlust ${p.worst_loss ?? '–'} · Joker ${p.jokers_used}</div><div class="hint">Verlauf: ${tl(p.timeline)}</div></div>`).join('')}</details>
-    <div class="grow"></div><div class="actions"><button class="btn" onclick="leave()">Zur Startseite</button></div></div></div>`;
+    <div class="grow"></div><div class="actions"><button class="btn" onclick="leave()">${tv ? 'Neue Runde' : 'Zur Startseite'}</button></div></div></div>`;
+}
+
+/* ---------- Effekte (nur beim ersten Anzeigen einer Ansicht) ---------- */
+const calm = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function confetti(n = 70) {
+  if (calm()) return;
+  const cols = ['#e07a67', '#f2c76a', '#2b7a5b', '#7fc4c4', '#17484d', '#f4a7b9'];
+  const box = document.createElement('div'); box.className = 'confetti';
+  box.innerHTML = Array.from({ length: n }, () => `<i style="left:${Math.random() * 100}%;background:${cols[Math.random() * cols.length | 0]};--x:${(Math.random() - .5) * 220}px;--r:${(Math.random() - .5) * 1440}deg;--d:${1.8 + Math.random() * 1.6}s;--w:${Math.random() * .5}s"></i>`).join('');
+  document.body.appendChild(box); setTimeout(() => box.remove(), 4200);
+}
+function countUp(el, delay = 0, dur = 900) {
+  const from = Number(el.dataset.from), to = Number(el.dataset.to);
+  if (from === to || calm()) return;
+  el.textContent = from;
+  setTimeout(() => { const t0 = performance.now();
+    const step = t => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step); }, delay);
+}
+/* Rangliste: Zeilen starten auf dem alten Platz und gleiten auf den neuen (FLIP) */
+function flipRows() {
+  const box = $('#rankRows'); if (!box || calm()) return;
+  const rows = [...box.children]; if (rows.length < 2) return;
+  const h = rows[1].offsetTop - rows[0].offsetTop;
+  let moved = false;
+  rows.forEach((r, i) => { const pi = r.dataset.prev === '' ? i : Number(r.dataset.prev); if (pi !== i) moved = true; r.style.transform = `translateY(${(pi - i) * h}px)`; });
+  if (!moved) return;
+  setTimeout(() => { box.classList.add('flip'); rows.forEach(r => (r.style.transform = '')); }, 1100);
+}
+const buzz = p => { try { if (!isTV() && navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(p); } catch {} };
+function effects() {
+  if (!S || !ID) return;
+  if (S.status === 'reveal') {
+    const mine = ownResult();
+    if (mine && mine.correct) { confetti(mine.bonus ? 120 : 60); buzz(40); }
+    else if (mine && mine.change < 0) buzz([70, 50, 70]);
+    flipRows();
+    document.querySelectorAll('.ticker[data-from]').forEach(e => countUp(e, 1100));
+  }
+  if (S.status === 'finished') { setTimeout(() => confetti(140), 1300); buzz([40, 60, 40, 60, 120]); }
 }
 
 /* ---------- Rendering ---------- */
 function viewKey() {
   if (!ID || !S) return 'home' + ui.step + ui.mode + ui.avatar + ui.taken.join() + (pool ? pool.active : '') + ui.solo;
   if (tutActive()) return 'tut' + ui.tutStep;
-  const st = S.status, ex = '|' + ui.menu + ui.confirm;
+  const st = S.status, ex = '|' + ui.menu + ui.confirm + (ui.ask ? ui.ask.type : '');
   if (st === 'lobby') return 'lobby' + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players + ex;   // Spielerliste wird per patchLobby() gepflegt
   if (st === 'question_active') return 'q' + S.question.sq_id + (M ? (M.submission ? 's' : 'o') + M.points + JSON.stringify(M.jokers_this_question) + JSON.stringify(M.jokers_left) : 'tv') + ex;
   if (st === 'reveal') return 'r' + S.question.sq_id + (M ? M.is_ready : '') + S.players.length + ex;
@@ -802,13 +1097,16 @@ function render(force) {
   else app.innerHTML = tutActive() ? tutorialView() : { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
   if (sameView) { document.querySelectorAll('.screen').forEach(e => e.classList.add('noanim')); window.scrollTo(0, sy); }   // gleiche Ansicht: nicht neu einblenden
   if (keep) { const e = document.getElementById(keep.id); if (e) { e.focus(); try { e.setSelectionRange(keep.pos, keep.pos); } catch {} } }
+  if (!sameView) effects();
   live();
 }
 function live() {   // kleine Änderungen ohne komplettes Neuzeichnen (Eingaben bleiben erhalten)
   if (!S) return;
   const a = $('#answered'); if (a && S.status === 'question_active') a.textContent = answeredCount();
-  document.querySelectorAll('[data-pa]').forEach(e => { const p = pl(e.dataset.pa); if (p && p.answered && !e.querySelector('.ok')) e.querySelector('.av').insertAdjacentHTML('beforeend', '<span class="ok">✓</span>'); });
-  const w = $('#waiting'); if (w) w.textContent = S.players.filter(p => p.required && !p.is_ready).length;
+  document.querySelectorAll('[data-pa]').forEach(e => { const p = pl(e.dataset.pa); if (p && p.answered && !e.querySelector('.ok')) { e.querySelector('.av').insertAdjacentHTML('beforeend', '<span class="ok">✓</span>'); e.classList.remove('wait'); } });
+  const wm = $('#waitmsg'); if (wm && S.status === 'question_active') { const t = waitingFor(); if (wm.innerHTML !== t) wm.innerHTML = t; }
+  const w = $('#waiting'); if (w) { const t = revealWaiting(); if (w.innerHTML !== t) w.innerHTML = t; }
+  document.querySelectorAll('.row[data-rid]').forEach(e => { const p = pl(e.dataset.rid); e.classList.toggle('isready', !!(p && p.required && p.is_ready)); });
   if (S.status === 'lobby' && !tutActive()) patchLobby();
 }
 async function loadPool() { try { pool = await rpc('quiz_pool_info'); if (!ID) { lastKey = ''; render(); } } catch {} }
@@ -822,6 +1120,9 @@ async function loadPool() { try { pool = await rpc('quiz_pool_info'); if (!ID) {
   ID = loadId();
   if (ID) { if (ID.role === 'tv') document.body.classList.add('tv'); startSync(); }
   render(true);
+  // Per QR-Code/Link gekommen: Code-Schritt überspringen, direkt zu Name + Avatar
+  const urlCode = new URLSearchParams(location.search).get('code');
+  if (!ID && urlCode) joinNext(urlCode);
 })();
 </script>
 </body>
