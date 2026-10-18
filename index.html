@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.6.1">
+<meta name="app-version" content="0.6.2">
 <title>Gambled Knowledge</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2248%22%20fill%3D%22%23e07a67%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2241%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%2211%22%20stroke-dasharray%3D%2212.9%2019.3%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2231%22%20fill%3D%22%23e07a67%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.5%22%20stroke-dasharray%3D%223%203%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2225%22%20fill%3D%22%23fff%22/%3E%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2234%22%20fill%3D%22%2317484d%22%3E%3F%3C/text%3E%3C/svg%3E">
 <style>
@@ -590,7 +590,7 @@ const go = step => { ui.step = step; render(true); window.scrollTo(0, 0); };
 const val = id => { const e = $('#' + id); return e ? e.value : ''; };
 const settingsFromForm = () => {
   const v = id => ui.sv[id] !== undefined && ui.sv[id] !== '' ? Number(ui.sv[id]) : undefined;
-  const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'), max_stake: v('s_max'),
+  const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'), max_stake: v('s_max'), min_points: v('s_min'),
     max_jokers_per_question: v('s_jpq'), han_solo_min_players: v('s_hsmin'), ready_timeout_seconds: v('s_rt'),
     difficulty_order: ui.sv.s_order === 'random' ? 'random' : undefined, min_players: ui.solo ? 1 : undefined };
   Object.keys(s).forEach(k => (s[k] === undefined || Number.isNaN(s[k])) && delete s[k]);
@@ -690,6 +690,7 @@ const pick = l => { ui.answer = l; document.querySelectorAll('.ans[data-l]').for
 const submitTxt = () => !ui.answer ? 'Erst eine Antwort wählen' : `${ui.answer} bestätigen · ${ui.stake} ${ui.stake === 1 ? 'Punkt' : 'Punkte'}${ui.joker ? ' · ' + JK[ui.joker][0] : ''}`;
 function submitLabel() { const b = $('#submitBtn'); if (b) { b.textContent = submitTxt(); b.classList.toggle('wait', !ui.answer); } }
 /* Höchsteinsatz: Deckel der Runde (max_stake, 0 = unbegrenzt), nie mehr als die eigenen Punkte */
+const minPts = () => (S && S.settings ? Number(S.settings.min_points) || 0 : 0);   // Untergrenze (alte Runden: 0)
 const stakeCap = () => { const c = S && S.settings ? Number(S.settings.max_stake) || 0 : 0; return c > 0 ? c : Infinity; };
 const maxStake = () => Math.min(M ? M.points : 0, stakeCap());
 const setStake = v => {
@@ -806,7 +807,8 @@ function homeView() {
         ${st('s_count', 'Fragen', '10', 'min=1 max=50')}${st('s_secs', 'Sekunden', '45', 'min=10 max=120')}
         ${st('s_pts', 'Startpunkte', '10', 'min=1 max=1000')}${st('s_jpq', 'Joker / Frage', '1', 'min=1 max=4')}
         ${st('s_hsmin', 'Han Solo ab', '3', 'min=2')}${st('s_rt', 'Weiter-Timeout s', 'aus', 'min=5')}
-        ${st('s_max', 'Max. Einsatz', '= Start', 'min=0')}<div class="hint" style="align-self:end;padding-bottom:6px">0 = unbegrenzt (Klassisch: alles setzen)</div>
+        ${st('s_max', 'Max. Einsatz', '= Start', 'min=0')}${st('s_min', 'Mindestpunkte', '1', 'min=0')}
+        <div class="hint" style="grid-column:1/-1;margin-top:-4px">Max. Einsatz 0 = unbegrenzt (alles setzen). Mindestpunkte: tiefer fällt niemand, 0 = bis auf 0.</div>
         <div style="grid-column:1/-1"><label class="f">Reihenfolge</label><select class="t" id="s_order" onchange="ui.sv.s_order=this.value"><option value="ascending">Schwierigkeit steigt</option><option value="random" ${ui.sv.s_order === 'random' ? 'selected' : ''}>Zufällig</option></select></div></div></details>
       <div class="grow"></div>
       <div class="actions"><button class="btn" onclick="createNext('${ui.mode === 'tv' ? 'tv' : 'phone'}')">${ui.mode === 'tv' ? 'TV-Runde starten' : 'Weiter'}</button></div></div></div>`;
@@ -938,14 +940,14 @@ function tutSteps() {
       <div class="try"><b>Probier's aus:</b> Du hast ${sp} Punkte und setzt <b class="ticker" id="tryV">${ex}</b>.
         <input type="range" min="0" max="${tmax}" value="${ex}" oninput="tutTry(this.value, ${sp})" aria-label="Beispiel-Einsatz">
         ${chipStacksHtml(ex).replace('id="chipStacks"', 'id="tryStack"')}
-        <div class="res"><span>Richtig → <b class="pos" id="tryW">${sp + ex}</b></span><span>Falsch → <b class="neg" id="tryL">${sp - ex}</b></span></div></div>
-      <p>Bist du dir sicher, setz viel. Bist du unsicher, setz wenig oder 0 – dann kannst du nichts verlieren.</p>` },
+        <div class="res"><span>Richtig → <b class="pos" id="tryW">${sp + ex}</b></span><span>Falsch → <b class="neg" id="tryL">${Math.max(Number(c.min_points) || 0, sp - ex)}</b></span></div></div>
+      <p>Bist du dir sicher, setz viel. Bist du unsicher, setz wenig oder 0 – dann kannst du nichts verlieren.${Number(c.min_points) > 0 ? ` Unter ${c.min_points} ${Number(c.min_points) === 1 ? 'Punkt' : 'Punkte'} fällst du nie.` : ''}</p>` },
     { icon: '✅', title: 'Antworten & bestätigen', body: `<ul class="tl"><li><b>1.</b> Antwort antippen</li><li><b>2.</b> Einsatz mit <b>−</b> / <b>+</b> einstellen</li><li><b>3.</b> Unten auf <b>Bestätigen</b> tippen – danach ist alles endgültig</li></ul><p>Läuft die Zeit ab, bevor du bestätigst, zählt die Frage als falsch – aber ohne Einsatz, du verlierst also nichts.</p>` },
     { icon: '🃏', title: 'Joker', body: `<p>Jeden Joker hast du nur begrenzt – setz ihn klug ein.</p><ul class="tl"><li><b>½ 50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Spiel)</li><li><b>👥 Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>⭐ Han Solo</b> – +${c.han_solo_bonus} Bonuspunkte, wenn <i>nur du</i> richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>🛟 Netz</b> – liegst du falsch, verlierst du nur die Hälfte deines Einsatzes (${j.safety_net}×)</li></ul><p class="hint">50:50 und Gruppe wirken sofort (nach kurzer Rückfrage). Han Solo und Netz werden zusammen mit der Antwort abgeschickt. Angezeigt werden nur Joker, die du gerade nutzen kannst – höchstens ${c.max_jokers_per_question} pro Frage.</p>` },
-    { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du sofort, ob du richtig lagst, wer was gewählt hat und wie sich die Rangliste verändert.</p><p>Tippe dann auf <b>Weiter</b> – die nächste Frage kommt, sobald alle bereit sind.</p><p class="hint">Mit 0 Punkten bist du nicht raus: Du spielst ohne Einsatz weiter mit.</p>` },
+    { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du sofort, ob du richtig lagst, wer was gewählt hat und wie sich die Rangliste verändert.</p><p>Tippe dann auf <b>Weiter</b> – die nächste Frage kommt, sobald alle bereit sind.</p><p class="hint">${Number(c.min_points) > 0 ? `Du fällst nie unter ${c.min_points} ${Number(c.min_points) === 1 ? 'Punkt' : 'Punkte'} – auch nach einem verlorenen All-in kannst du dich zurückkämpfen.` : 'Mit 0 Punkten bist du nicht raus: Du spielst ohne Einsatz weiter mit.'}</p>` },
   ];
 }
-function tutTry(v, sp) { v = Number(v); $('#tryV').textContent = v; updateChips(v, $('#tryStack')); $('#tryW').textContent = sp + v; $('#tryL').textContent = sp - v; }
+function tutTry(v, sp) { v = Number(v); $('#tryV').textContent = v; updateChips(v, $('#tryStack')); $('#tryW').textContent = sp + v; $('#tryL').textContent = Math.max(minPts(), sp - v); }
 /* Wischen im Tutorial (links = weiter, rechts = zurück) */
 let swipeX = null;
 document.addEventListener('touchstart', e => { swipeX = tutActive() && e.target.type !== 'range' ? e.touches[0].clientX : null; }, { passive: true });
@@ -1116,7 +1118,8 @@ function rankRows() {
       <div class="pts">${chipIco()}<span class="ticker" data-from="${pr ? pr.pts : p.points}" data-to="${p.points}">${p.points}</span>${r ? `<small class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : 'zero'}">${sgn(r.change)}${r.bonus ? ' ★' : ''}</small>` : ''}</div></div>`;
   }).join('')}</div>`;
 }
-const revealWaiting = () => { const w = S.players.filter(p => p.required && !p.is_ready); return !w.length ? 'Alle bereit – es geht weiter …' : w.length <= 3 ? `Warten auf ${w.map(p => esc(p.nickname)).join(', ')}` : `Warten auf ${w.length} Spieler`; };
+const whoName = p => (ID && p.id === ID.playerId ? 'dich' : esc(p.nickname));
+const revealWaiting = () => { const w = S.players.filter(p => p.required && !p.is_ready); return !w.length ? 'Alle bereit – es geht weiter …' : w.length <= 3 ? `Warten auf ${w.map(whoName).join(', ')}` : `Warten auf ${w.length} Spieler`; };
 function revealView() {
   const q = S.question, rv = S.reveal, tv = isTV();
   const mine = ownResult(), m = me();
@@ -1126,10 +1129,12 @@ function revealView() {
   let banner = '';
   if (mine && m) {
     const title = mine.timed_out ? 'Zeit abgelaufen' : mine.correct ? (mine.bonus ? 'Han Solo!' : 'Richtig!') : 'Leider falsch';
-    const detail = mine.timed_out ? 'Kein Einsatz – du verlierst nichts.' : mine.change === 0 ? (mine.correct ? 'Ohne Einsatz – keine Punkte.' : 'Ohne Einsatz – nichts verloren.') : `${sgn(mine.change)} ${Math.abs(mine.change) === 1 ? 'Punkt' : 'Punkte'}${mine.bonus ? ` (inkl. ${mine.bonus} Bonus)` : ''}${mine.joker === 'safety_net' && !mine.correct ? ' – das Netz hat die Hälfte gerettet' : ''}`;
+    const floored = !mine.correct && !mine.timed_out && mine.stake > 0 && minPts() > 0 && m.points === minPts();   // an der Untergrenze aufgefangen
+    const detail = floored ? (mine.change === 0 ? `Du warst schon bei ${minPts()} – tiefer geht's nicht. Kämpf dich zurück!` : `${sgn(mine.change)} ${Math.abs(mine.change) === 1 ? 'Punkt' : 'Punkte'} – du bleibst bei ${minPts()} und kannst dich zurückkämpfen.`)
+      : mine.timed_out ? 'Kein Einsatz – du verlierst nichts.' : mine.change === 0 ? (mine.correct ? 'Ohne Einsatz – keine Punkte.' : 'Ohne Einsatz – nichts verloren.') : `${sgn(mine.change)} ${Math.abs(mine.change) === 1 ? 'Punkt' : 'Punkte'}${mine.bonus ? ` (inkl. ${mine.bonus} Bonus)` : ''}${mine.joker === 'safety_net' && !mine.correct ? ' – das Netz hat die Hälfte gerettet' : ''}`;
     banner = `<div class="banner ${mine.change > 0 || (mine.correct && !mine.change) ? 'ok' : mine.change < 0 ? 'bad' : 'zero'}">${av(m.avatar, 56)}
       <div style="flex:1"><div class="t ${mine.change > 0 ? 'pos' : mine.change < 0 ? 'neg' : ''}">${title}</div><div class="hint" style="color:var(--text)">${detail}</div>
-      <div class="hint">Jetzt <b class="ticker" data-from="${m.points - (mine.change || 0)}" data-to="${m.points}">${m.points}</b> Punkte · Platz ${m.rank} von ${S.players.length}</div></div></div>`;
+      <div class="hint">Stand: ${chipIco()}<b class="ticker" data-from="${m.points - (mine.change || 0)}" data-to="${m.points}">${m.points}</b> · Platz ${m.rank} von ${S.players.length}</div></div></div>`;
   }
   const required = m && m.required;
   const action = tv ? `<div class="hint" style="text-align:center;width:100%;font-size:clamp(16px,1.3vw,26px)" id="waiting">${revealWaiting()}</div>`
