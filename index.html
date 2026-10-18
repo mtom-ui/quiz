@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.2.2">
+<meta name="app-version" content="0.2.3">
 <title>Quiz</title>
 <style>
   :root {
@@ -125,6 +125,7 @@
   .rows { display: flex; flex-direction: column; }
   .row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
+  .row .av { --s: 48px; }
   .row .rk { width: 22px; text-align: center; font-weight: 700; color: var(--muted); }
   .row .nm { flex: 1; min-width: 0; font-weight: 600; }
   .row .nm small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
@@ -179,19 +180,27 @@
 
   /* ---------- TV ---------- */
   body.tv { background: var(--ink); }
-  body.tv .screen { max-width: 1280px; }
-  body.tv .hero { padding: 26px 48px 44px; }
+  body.tv .screen { max-width: none; margin: 0; }
+  body.tv .hero { padding: 2.4vh 4vw 3.6vh; }
   body.tv .q { font-size: clamp(34px, 4.2vw, 60px); }
   body.tv .timer { font-size: 34px; padding: 12px 26px; border-radius: 20px; }
   body.tv .meta { font-size: 26px; }
-  body.tv .sheet { padding: 34px 48px 0; gap: 26px; }
-  body.tv .actions { margin: 0 -48px; padding: 16px 48px 22px; flex-direction: row; }
+  body.tv .sheet { padding: 3vh 4vw 0; gap: 2.6vh; }
+  body.tv .actions { margin: 0 -4vw; padding: 1.6vh 4vw 2.4vh; flex-direction: row; }
   body.tv .ans { font-size: clamp(22px, 2.6vw, 34px); min-height: 100px; border-radius: 26px; padding: 22px; }
-  body.tv .tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-  body.tv .tile .av { --s: 100px; }
-  body.tv .tile .nm { font-size: 18px; }
-  body.tv .qr svg { width: 280px; height: 280px; }
-  body.tv .big { font-size: 88px; }
+  body.tv .tiles { --tvk: 6; grid-template-columns: repeat(auto-fill, minmax(calc(var(--tvk) * 1vw + 16px), 1fr)); gap: 2.2vh 1.4vw; }
+  body.tv .tile .av { --s: calc(var(--tvk) * 1vw); }
+  body.tv .tile .nm { font-size: clamp(18px, 1.5vw, 30px); margin-top: 8px; }
+  body.tv .tile .st { font-size: clamp(14px, 1.1vw, 22px); }
+  body.tv .tile .x { width: 34px; height: 34px; font-size: 20px; }
+  body.tv .qr { padding: 22px; border-radius: 32px; }
+  body.tv .qr svg { width: clamp(280px, min(24vw, 42vh), 560px); height: clamp(280px, min(24vw, 42vh), 560px); }
+  body.tv .qr .url { font-size: clamp(14px, 1.1vw, 22px); margin-top: 12px; }
+  body.tv .big { font-size: clamp(64px, min(7vw, 12vh), 150px); margin: .5vh 0 0; }
+  body.tv .hero .sub { font-size: clamp(16px, 1.4vw, 28px); }
+  body.tv .chip { font-size: clamp(15px, 1.2vw, 24px); padding: 8px 20px; }
+  body.tv h3.f { font-size: clamp(15px, 1.2vw, 24px); }
+  body.tv .lobby-cols { grid-template-columns: auto 1fr; gap: 3vw; }
   body.tv .row { padding: 14px 0; font-size: 22px; }
   body.tv .row .av { --s: 64px; }
   body.tv .rows { columns: 2; column-gap: 56px; }
@@ -273,7 +282,7 @@ let S = null;           // öffentlicher Zustand
 let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
 const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
-let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900,
+let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false,
   menu: false, confirm: null, reason: '', stake: 1, answer: null, joker: '', sv: {} };
 let pool = null;
 let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
@@ -389,7 +398,7 @@ const settingsFromForm = () => {
   const v = id => ui.sv[id] !== undefined && ui.sv[id] !== '' ? Number(ui.sv[id]) : undefined;
   const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'),
     max_jokers_per_question: v('s_jpq'), han_solo_min_players: v('s_hsmin'), ready_timeout_seconds: v('s_rt'),
-    difficulty_order: ui.sv.s_order === 'random' ? 'random' : undefined };
+    difficulty_order: ui.sv.s_order === 'random' ? 'random' : undefined, min_players: ui.solo ? 1 : undefined };
   Object.keys(s).forEach(k => (s[k] === undefined || Number.isNaN(s[k])) && delete s[k]);
   return s;
 };
@@ -489,7 +498,7 @@ function selAvatar(n) {
 
 /* ---------- Bausteine ---------- */
 const avSrc = n => `avatars/a${String(n).padStart(2, '0')}.jpg`;
-const av = (n, s = 44, extra = '') => `<span class="av" style="--s:${s}px">${n ? `<img src="${avSrc(n)}" alt="" draggable="false">` : ''}${extra}</span>`;
+const av = (n, s = 0, extra = '') => `<span class="av"${s ? ` style="--s:${s}px"` : ''}>${n ? `<img src="${avSrc(n)}" alt="" draggable="false">` : ''}${extra}</span>`;
 const avFull = n => `<div class="avfull">${n ? `<img src="${avSrc(n)}" alt="">` : ''}</div>`;
 const CHECK = '<svg class="chk" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="11" fill="#17484d"/><path d="M6 11.5l3.2 3.2L16 7.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const dots = '<svg width="22" height="6" viewBox="0 0 22 6" fill="#fff"><circle cx="3" cy="3" r="2.6"/><circle cx="11" cy="3" r="2.6"/><circle cx="19" cy="3" r="2.6"/></svg>';
@@ -527,6 +536,7 @@ function homeView() {
     <div class="sheet">
       <div class="seg2"><button class="${ui.mode === 'tv' ? '' : 'on'}" onclick="ui.mode='phone';render(true)">📱 Handy<small>Du spielst mit</small></button>
         <button class="${ui.mode === 'tv' ? 'on' : ''}" onclick="ui.mode='tv';render(true)">📺 TV<small>Du moderierst</small></button></div>
+      ${ui.mode === 'tv' ? '' : `<button class="seg2" style="display:block;width:100%;border:1.5px solid ${ui.solo ? 'var(--ink)' : 'var(--line)'};background:${ui.solo ? 'var(--sel)' : '#fff'};border-radius:18px;padding:14px;text-align:left;font-weight:600" onclick="ui.solo=!ui.solo;render(true)">${ui.solo ? '✅' : '⬜'} Alleine starten (Test)<small style="display:block;font-weight:400;color:var(--muted)">Die Runde lässt sich schon mit einem Spieler starten.</small></button>`}
       <details class="set" ${ui.settingsOpen ? 'open' : ''} ontoggle="ui.settingsOpen=this.open"><summary>Einstellungen</summary><div class="grid2">
         ${st('s_count', 'Fragen', '10', 'min=1 max=50')}${st('s_secs', 'Sekunden', '45', 'min=10 max=120')}
         ${st('s_pts', 'Startpunkte', '10', 'min=1 max=1000')}${st('s_jpq', 'Joker / Frage', '1', 'min=1 max=4')}
@@ -575,7 +585,7 @@ function menuView() {
 
 function lobbyView() {
   const cfg = S.settings, m = me(), tv = isTV();
-  const tiles = S.players.map(p => `<div class="tile">${av(p.avatar, 72)}
+  const tiles = S.players.map(p => `<div class="tile">${av(p.avatar)}
       <div class="nm">${esc(p.nickname)}${ID && p.id === ID.playerId ? ' (du)' : ''}</div>
       <div class="st ${p.is_ready ? 'ready' : ''}">${p.is_admin ? 'Admin' : p.is_ready ? '✓ bereit' : 'wartet …'}</div>
       ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="A.kick('${p.id}')">×</button>` : ''}</div>`).join('');
@@ -587,7 +597,8 @@ function lobbyView() {
     : tv ? '<div class="hint" style="text-align:center;width:100%">Warte auf den Start …</div>'
     : `<button class="btn ${m && m.is_ready ? 'ghost' : ''}" onclick="A.ready(${m && m.is_ready ? 'false' : 'true'})">${m && m.is_ready ? 'Doch nicht bereit' : 'Ich bin bereit'}</button>`;
   const hero = `<div class="hero">${topbar('Lobby')}<div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>`;
-  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol"><div>${share}</div><div><h3 class="f" style="margin-top:0">${S.players.length} Spieler</h3><div class="tiles">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  const n = S.players.length, tvk = n <= 4 ? 9.2 : n <= 8 ? 7.4 : n <= 12 ? 6.3 : 4.6;
+  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0">${S.players.length} Spieler</h3><div class="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
   return `<div class="screen">${hero}<div class="sheet">${share}<div><h3 class="f">${S.players.length} Spieler</h3><div class="tiles">${tiles}</div></div>${chips}<div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
 }
 
@@ -665,7 +676,7 @@ function rankRows() {
   return `<div class="rows">${S.players.map(p => {
     const r = res[p.id];
     const sub = r ? (r.timed_out ? 'Zeit abgelaufen' : `${r.answer} · Einsatz ${r.stake}${r.joker ? ' · ' + (r.joker === 'han_solo' ? 'Han Solo' : 'Netz') : ''}`) : '';
-    return `<div class="row ${ID && p.id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar, 48)}
+    return `<div class="row ${ID && p.id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
       <div class="nm">${esc(p.nickname)}${p.points === 0 ? '<span class="zbadge">0 Punkte</span>' : ''}<small>${esc(sub)}</small></div>
       <div class="pts">${p.points}${r ? `<small class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : 'zero'}">${sgn(r.change)}${r.bonus ? ' ★' : ''}</small>` : ''}</div></div>`;
   }).join('')}</div>`;
@@ -692,7 +703,7 @@ function finishedView() {
   const f = S.final, win = f.filter(p => p.rank === 1), w = win[0];
   const tl = a => a.map(x => (x > 0 ? '+' : '') + x).join(' ');
   const hero = `<div class="hero">${topbar('Spiel beendet')}<div class="winner">${w ? `<div class="sub" style="margin-top:10px">🏆 Sieger</div>${avFull(w.avatar)}<div class="name">${win.map(p => esc(p.nickname)).join(' &amp; ')}</div><div class="pts">${w.points} Punkte</div>` : ''}</div></div>`;
-  return `<div class="screen">${hero}<div class="sheet"><div class="rows">${f.map(p => `<div class="row ${ID && p.player_id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar, 46)}
+  return `<div class="screen">${hero}<div class="sheet"><div class="rows">${f.map(p => `<div class="row ${ID && p.player_id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar)}
     <div class="nm">${esc(p.nickname)}<small>${p.correct} von ${p.answered} richtig</small></div><div class="pts">${p.points}</div></div>`).join('')}</div>
     <details class="set"><summary>Details</summary>${f.map(p => `<div style="padding:8px 0;border-top:1px solid var(--line)"><b>${esc(p.nickname)}</b>
       <div class="hint">Bester Gewinn ${p.best_win ?? '–'} · Größter Verlust ${p.worst_loss ?? '–'} · Joker ${p.jokers_used}</div><div class="hint">Verlauf: ${tl(p.timeline)}</div></div>`).join('')}</details>
@@ -701,7 +712,7 @@ function finishedView() {
 
 /* ---------- Rendering ---------- */
 function viewKey() {
-  if (!ID || !S) return 'home' + ui.step + ui.mode + ui.avatar + ui.taken.join() + (pool ? pool.active : '');
+  if (!ID || !S) return 'home' + ui.step + ui.mode + ui.avatar + ui.taken.join() + (pool ? pool.active : '') + ui.solo;
   const st = S.status, ex = '|' + ui.menu + ui.confirm;
   if (st === 'lobby') return 'lobby' + JSON.stringify(S.players.map(p => [p.id, p.nickname, p.avatar, p.is_ready])) + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players + ex;
   if (st === 'question_active') return 'q' + S.question.sq_id + (M ? (M.submission ? 's' : 'o') + M.points + JSON.stringify(M.jokers_this_question) + JSON.stringify(M.jokers_left) : 'tv') + ex;
