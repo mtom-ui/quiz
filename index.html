@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.4.1">
+<meta name="app-version" content="0.5.0">
 <title>Quiz</title>
 <style>
   :root {
@@ -95,12 +95,13 @@
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
   .chip { border: 1.5px solid var(--line); border-radius: 16px; padding: 6px 14px; font-size: 14px; font-weight: 600; background: #fff; }
   .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .jokers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .jokers { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
   .jk { border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 2px 8px; text-align: center; font-size: 12px; font-weight: 600; position: relative; background: #fff; transition: all .15s; }
   .jk i { display: block; font-style: normal; font-size: 22px; margin-bottom: 2px; }
   .jk .n { position: absolute; top: -7px; right: -4px; background: var(--ink); color: #fff; border-radius: 9px; font-size: 11px; padding: 0 6px; }
   .jk.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .jk:disabled { opacity: .35; }
+  .jk:disabled { opacity: .55; }
+  .jk.on:disabled { opacity: 1; }
   .hint { font-size: 13px; color: var(--muted); }
 
   /* ---------- Fortschritt ---------- */
@@ -259,8 +260,6 @@
   .tbar { height: 6px; border-radius: 3px; background: #ffffff26; overflow: hidden; margin: -2px 0 14px; }
   .tbar i { display: block; height: 100%; background: var(--coral); transform-origin: left; transition: transform .25s linear; }
   body.tv .tbar { height: 10px; border-radius: 5px; }
-  .jk.arm { background: var(--coral); border-color: var(--coral); color: #fff; animation: wob .5s ease; }
-  @keyframes wob { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
   .strip { display: flex; gap: 10px 8px; flex-wrap: wrap; justify-content: center; }
   .strip .who { width: 52px; text-align: center; transition: opacity .3s; }
   .strip .who .av { margin: 0 auto; }
@@ -415,7 +414,7 @@ const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile
 let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false, tutOpen: false, tutStep: 0,
   menu: false, confirm: null, ask: null, reason: '', stake: 1, answer: null, joker: '', arm: '', sv: {}, takenNames: [] };
 let pool = null;
-let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
+let lastStatus = null, lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
 
 const save = () => { try { sessionStorage.setItem('quiz.id', JSON.stringify(ID)); localStorage.setItem('quiz.last', JSON.stringify(ID)); } catch {} };
 const saveProfile = () => { try { localStorage.setItem('quiz.profile', JSON.stringify({ nick: ui.nick, avatar: ui.avatar })); } catch {} };
@@ -456,10 +455,10 @@ async function refresh(force) {
     ]);
     offset = Date.parse(s.server_now) - Date.now();
     S = s; M = m;
-    if (S.status !== 'lobby') ui.ask = null;
+    if (S.status !== lastStatus) { ui.ask = null; lastStatus = S.status; }
     if (S.status === 'question_active' && S.question && lastQ !== S.question.sq_id) {
-      lastQ = S.question.sq_id; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = ''; ui.menu = false;
-      ui.stake = Math.min(1, M ? M.points : 0);
+      lastQ = S.question.sq_id; ui.ask = null; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = ''; ui.menu = false;
+      ui.stake = Math.min(1, maxStake());
     }
     netState(true);
     handleEvent();
@@ -548,7 +547,7 @@ const go = step => { ui.step = step; render(true); window.scrollTo(0, 0); };
 const val = id => { const e = $('#' + id); return e ? e.value : ''; };
 const settingsFromForm = () => {
   const v = id => ui.sv[id] !== undefined && ui.sv[id] !== '' ? Number(ui.sv[id]) : undefined;
-  const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'),
+  const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'), max_stake: v('s_max'),
     max_jokers_per_question: v('s_jpq'), han_solo_min_players: v('s_hsmin'), ready_timeout_seconds: v('s_rt'),
     difficulty_order: ui.sv.s_order === 'random' ? 'random' : undefined, min_players: ui.solo ? 1 : undefined };
   Object.keys(s).forEach(k => (s[k] === undefined || Number.isNaN(s[k])) && delete s[k]);
@@ -643,25 +642,21 @@ const A = {
 const setMenu = on => { ui.menu = on; ui.confirm = null; render(true); };
 const setConfirm = c => { ui.confirm = c; render(true); };
 const pick = l => { ui.answer = l; document.querySelectorAll('.ans[data-l]').forEach(b => b.classList.toggle('sel', b.dataset.l === l)); submitLabel(); };
-const submitTxt = () => !ui.answer ? 'Erst eine Antwort wählen' : `${ui.answer} bestätigen · ${ui.stake} ${ui.stake === 1 ? 'Punkt' : 'Punkte'} Einsatz`;
+const submitTxt = () => !ui.answer ? 'Erst eine Antwort wählen' : `${ui.answer} bestätigen · ${ui.stake} ${ui.stake === 1 ? 'Punkt' : 'Punkte'}${ui.joker ? ' · ' + JK[ui.joker][0] : ''}`;
 function submitLabel() { const b = $('#submitBtn'); if (b) { b.textContent = submitTxt(); b.classList.toggle('wait', !ui.answer); } }
+/* Höchsteinsatz: Deckel der Runde (max_stake, 0 = unbegrenzt), nie mehr als die eigenen Punkte */
+const stakeCap = () => { const c = S && S.settings ? Number(S.settings.max_stake) || 0 : 0; return c > 0 ? c : Infinity; };
+const maxStake = () => Math.min(M ? M.points : 0, stakeCap());
 const setStake = v => {
-  const max = M ? M.points : 0;
+  const max = maxStake();
   ui.stake = Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
-  if (ui.stake === 0 && ui.joker === 'safety_net') { ui.joker = ''; document.querySelectorAll('[data-jk]').forEach(b => b.classList.remove('on')); }
-  $('#stakeVal').textContent = ui.stake; $('#stakeRange').value = ui.stake;
-  document.querySelectorAll('[data-jk=safety_net]').forEach(e => (e.disabled = ui.stake === 0 && ui.joker !== 'safety_net'));
+  if (ui.stake === 0 && ui.joker === 'safety_net') { ui.joker = ''; document.querySelectorAll('[data-jkey=safety_net]').forEach(b => b.classList.remove('on')); }
+  const sv = $('#stakeVal'), sr = $('#stakeRange'); if (sv) sv.textContent = ui.stake; if (sr) sr.value = ui.stake;
+  syncJokers();
   document.querySelectorAll('[data-chip]').forEach(c => c.classList.toggle('on', Number(c.dataset.chip) === ui.stake));
   submitLabel();
 };
-/* Sofort-Joker (50:50, Gruppe): erstes Tippen fragt nach, zweites setzt ein – kein versehentliches Verbrauchen */
-function armJoker(key) {
-  if (ui.arm === key) { ui.arm = ''; return A.joker(key); }
-  ui.arm = key; clearTimeout(armJoker.t);
-  document.querySelectorAll('[data-ij]').forEach(b => { const on = b.dataset.ij === key; b.classList.toggle('arm', on); b.querySelector('.lb').textContent = on ? 'Einsetzen?' : b.dataset.label; });
-  armJoker.t = setTimeout(() => { ui.arm = ''; document.querySelectorAll('[data-ij]').forEach(b => { b.classList.remove('arm'); if (!b.classList.contains('on')) b.querySelector('.lb').textContent = b.dataset.label; }); }, 3500);
-}
-const setJoker = j => { ui.joker = ui.joker === j ? '' : j; document.querySelectorAll('[data-jk]').forEach(b => b.classList.toggle('on', b.dataset.jk === ui.joker)); };
+const setJoker = j => { ui.joker = ui.joker === j ? '' : j; document.querySelectorAll('[data-jkey=han_solo],[data-jkey=safety_net]').forEach(b => b.classList.toggle('on', b.dataset.jkey === ui.joker)); syncJokers(); submitLabel(); };
 function selAvatar(n) {
   if (ui.taken.includes(n)) return toast('Dieser Avatar ist schon vergeben.', true);
   ui.avatar = n; ui.nick = val('nick');
@@ -714,6 +709,7 @@ function homeView() {
         ${st('s_count', 'Fragen', '10', 'min=1 max=50')}${st('s_secs', 'Sekunden', '45', 'min=10 max=120')}
         ${st('s_pts', 'Startpunkte', '10', 'min=1 max=1000')}${st('s_jpq', 'Joker / Frage', '1', 'min=1 max=4')}
         ${st('s_hsmin', 'Han Solo ab', '3', 'min=2')}${st('s_rt', 'Weiter-Timeout s', 'aus', 'min=5')}
+        ${st('s_max', 'Max. Einsatz', '= Start', 'min=0')}<div class="hint" style="align-self:end;padding-bottom:6px">0 = unbegrenzt (Klassisch: alles setzen)</div>
         <div style="grid-column:1/-1"><label class="f">Reihenfolge</label><select class="t" id="s_order" onchange="ui.sv.s_order=this.value"><option value="ascending">Schwierigkeit steigt</option><option value="random" ${ui.sv.s_order === 'random' ? 'selected' : ''}>Zufällig</option></select></div></div></details>
       <div class="grow"></div>
       <div class="actions"><button class="btn" onclick="createNext('${ui.mode === 'tv' ? 'tv' : 'phone'}')">${ui.mode === 'tv' ? 'TV-Runde starten' : 'Weiter'}</button></div></div></div>`;
@@ -819,6 +815,11 @@ function askView() {
   let h = '';
   if (ui.ask.type === 'kick') h = `<h2>${esc(ui.ask.name)} entfernen?</h2><p class="hint" style="margin:0">Die Person kann mit dem Code wieder beitreten.</p>
     <button class="btn danger" onclick="const id=ui.ask.id;ui.ask=null;A.kick(id)">Ja, entfernen</button><button class="btn ghost" onclick="closeAsk()">Abbrechen</button>`;
+  if (ui.ask.type === 'joker') { const k = ui.ask.key, others = S.players.filter(p => p.answered && p.id !== ID.playerId).length;
+    h = k === 'fifty_fifty'
+      ? `<h2>½ 50:50 einsetzen?</h2><p class="hint" style="margin:0">Zwei falsche Antworten verschwinden – nur bei dir. Der Joker ist danach verbraucht.</p>`
+      : `<h2>👥 Gruppenmeinung einsetzen?</h2><p class="hint" style="margin:0">Du siehst, wie sich die ${others} ${others === 1 ? 'Antwort' : 'Antworten'}, die schon abgegeben ${others === 1 ? 'wurde' : 'wurden'}, auf A–D verteilen. Je später du ihn nutzt, desto aussagekräftiger.</p>`;
+    h += `<button class="btn" onclick="useJoker('${k}')">Ja, einsetzen</button><button class="btn ghost" onclick="closeAsk()">Abbrechen</button>`; }
   if (ui.ask.type === 'start') { const n = notReady();
     h = `<h2>Trotzdem starten?</h2><p class="hint" style="margin:0">${n.map(p => esc(p.nickname)).join(', ')} ${n.length === 1 ? 'hat' : 'haben'} noch nicht auf „Bereit“ getippt und ${n.length === 1 ? 'liest' : 'lesen'} vielleicht noch die Anleitung. Sie spielen trotzdem mit.</p>
     <button class="btn" onclick="ui.ask=null;A.start()">Jetzt starten</button><button class="btn ghost" onclick="closeAsk()">Noch kurz warten</button>`; }
@@ -833,16 +834,16 @@ function tutOpen() { ui.tutOpen = true; ui.tutStep = 0; render(true); window.scr
 function tutGo(d) { ui.tutStep = Math.max(0, Math.min(tutSteps().length - 1, ui.tutStep + d)); render(true); window.scrollTo(0, 0); }
 function tutDone() { try { sessionStorage.setItem(tutKey(), '1'); } catch {} ui.tutOpen = false; ui.tutStep = 0; render(true); window.scrollTo(0, 0); }
 function tutSteps() {
-  const c = S.settings, j = c.jokers, sp = c.start_points, ex = Math.max(1, Math.round(sp * .4));
+  const c = S.settings, j = c.jokers, sp = c.start_points, tmax = Number(c.max_stake) > 0 ? Math.min(sp, c.max_stake) : sp, ex = Math.max(1, Math.round(tmax * .4));
   return [
     { icon: '🎲', title: 'So läuft ein Spiel', body: `<p>Alle spielen gleichzeitig, jeder auf dem eigenen Handy. Es gibt <b>${c.question_count} Fragen</b> mit je vier Antworten und <b>${c.answer_seconds} Sekunden</b> Zeit.</p><p class="hint" style="margin:0 0 6px">Beispiel: Was ist die Hauptstadt von Italien?</p><div class="mock"><span>A. Mailand</span><span class="sel">B. Rom ✓</span><span>C. Neapel</span><span>D. Turin</span></div><p>Du startest mit <b>${sp} Punkten</b>. Wer am Ende die meisten hat, gewinnt.</p>` },
-    { icon: '🎯', title: 'Dein geheimer Einsatz', body: `<p>Bei jeder Frage setzt du Punkte – von 0 bis alle, die du hast. Die anderen sehen deinen Einsatz erst bei der Auflösung.</p>
+    { icon: '🎯', title: 'Dein geheimer Einsatz', body: `<p>Bei jeder Frage setzt du Punkte – ${Number(c.max_stake) > 0 ? `von 0 bis höchstens <b>${c.max_stake}</b> (und nie mehr, als du hast)` : 'von 0 bis alle, die du hast'}. Die anderen sehen deinen Einsatz erst bei der Auflösung.</p>
       <div class="try"><b>Probier's aus:</b> Du hast ${sp} Punkte und setzt <b class="ticker" id="tryV">${ex}</b>.
-        <input type="range" min="0" max="${sp}" value="${ex}" oninput="tutTry(this.value, ${sp})" aria-label="Beispiel-Einsatz">
+        <input type="range" min="0" max="${tmax}" value="${ex}" oninput="tutTry(this.value, ${sp})" aria-label="Beispiel-Einsatz">
         <div class="res"><span>Richtig → <b class="pos" id="tryW">${sp + ex}</b></span><span>Falsch → <b class="neg" id="tryL">${sp - ex}</b></span></div></div>
       <p>Bist du dir sicher, setz viel. Bist du unsicher, setz wenig oder 0 – dann kannst du nichts verlieren.</p>` },
     { icon: '✅', title: 'Antworten & bestätigen', body: `<ul class="tl"><li><b>1.</b> Antwort antippen</li><li><b>2.</b> Einsatz mit <b>−</b> / <b>+</b> einstellen</li><li><b>3.</b> Unten auf <b>Bestätigen</b> tippen – danach ist alles endgültig</li></ul><p>Läuft die Zeit ab, bevor du bestätigst, zählt die Frage als falsch – aber ohne Einsatz, du verlierst also nichts.</p>` },
-    { icon: '🃏', title: 'Joker', body: `<p>Jeden Joker hast du nur begrenzt – setz ihn klug ein.</p><ul class="tl"><li><b>½ 50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Spiel)</li><li><b>👥 Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>⭐ Han Solo</b> – +${c.han_solo_bonus} Bonuspunkte, wenn <i>nur du</i> richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>🛟 Netz</b> – liegst du falsch, verlierst du nur die Hälfte deines Einsatzes (${j.safety_net}×)</li></ul><p class="hint">50:50 und Gruppe wirken sofort (zweimal antippen). Han Solo und Netz werden zusammen mit der Antwort abgeschickt. Höchstens ${c.max_jokers_per_question} Joker pro Frage.</p>` },
+    { icon: '🃏', title: 'Joker', body: `<p>Jeden Joker hast du nur begrenzt – setz ihn klug ein.</p><ul class="tl"><li><b>½ 50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Spiel)</li><li><b>👥 Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>⭐ Han Solo</b> – +${c.han_solo_bonus} Bonuspunkte, wenn <i>nur du</i> richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>🛟 Netz</b> – liegst du falsch, verlierst du nur die Hälfte deines Einsatzes (${j.safety_net}×)</li></ul><p class="hint">50:50 und Gruppe wirken sofort (nach kurzer Rückfrage). Han Solo und Netz werden zusammen mit der Antwort abgeschickt. Angezeigt werden nur Joker, die du gerade nutzen kannst – höchstens ${c.max_jokers_per_question} pro Frage.</p>` },
     { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du sofort, ob du richtig lagst, wer was gewählt hat und wie sich die Rangliste verändert.</p><p>Tippe dann auf <b>Weiter</b> – die nächste Frage kommt, sobald alle bereit sind.</p><p class="hint">Mit 0 Punkten bist du nicht raus: Du spielst ohne Einsatz weiter mit.</p>` },
   ];
 }
@@ -868,7 +869,7 @@ function lobbyView() {
   const cfg = S.settings, m = me(), tv = isTV();
   const tiles = S.players.map(tileHtml).join('');
   const share = `<div class="qr">${qrSvg(joinUrl())}<div class="url">${esc(joinUrl())}</div></div>`;
-  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s pro Frage</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
+  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s pro Frage</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">${Number(cfg.max_stake) > 0 ? `Einsatz max. ${cfg.max_stake}` : 'Einsatz unbegrenzt'}</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
   const need = cfg.min_players;
   const action = isAdmin()
     ? `<button class="btn" id="startBtn" onclick="askStart()" ${S.players.length < need ? 'disabled' : ''}>${startLabel()}</button><div class="hint" id="startHint" style="text-align:center" ${S.players.length < need ? '' : 'hidden'}>Mindestens ${need} Spieler nötig</div>`
@@ -909,31 +910,67 @@ function answerList(mode) {   // 'pick' | 'locked' | 'reveal'
   }).join('')}</div>`;
 }
 
+const JK = { fifty_fifty: ['½', '50:50'], group_opinion: ['👥', 'Gruppe'], han_solo: ['⭐', 'Han Solo'], safety_net: ['🛟', 'Netz'] };
+/* Ist ein Joker gerade sinnvoll nutzbar? Unbrauchbare werden ausgeblendet statt ausgegraut. */
+function jokerUsable(key) {
+  if (!M || !S || !S.question) return false;
+  const left = M.jokers_left || {}, used = M.jokers_this_question || {};
+  if (used[key] || ui.joker === key) return true;                          // eingesetzt/gewählt: sichtbar lassen
+  const usedCount = Object.keys(used).length + (ui.joker ? 1 : 0);
+  if ((left[key] || 0) < 1 || usedCount >= S.settings.max_jokers_per_question) return false;
+  if (key === 'group_opinion') return S.players.some(p => p.answered && p.id !== ID.playerId);   // erst wenn jemand abgegeben hat
+  if (key === 'han_solo') return (S.question.active_count || 0) >= S.settings.han_solo_min_players;
+  if (key === 'safety_net') return ui.stake > 0;
+  return true;
+}
 function jokerBox() {
   const left = M.jokers_left || {}, used = M.jokers_this_question || {};
-  const maxQ = S.settings.max_jokers_per_question;
-  const usedCount = Object.keys(used).length + (ui.joker ? 1 : 0);
-  const inst = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || !!used[key] || usedCount >= maxQ;
-    return `<button class="jk ${used[key] ? 'on' : ''}" data-ij="${key}" data-label="${label}" ${dis ? 'disabled' : ''} onclick="armJoker('${key}')"><span class="n">${n}</span><i>${icon}</i><span class="lb">${used[key] ? 'benutzt' : label}</span></button>`; };
-  const tog = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || (usedCount >= maxQ && ui.joker !== key) || (key === 'safety_net' && ui.stake === 0 && ui.joker !== key);
-    return `<button class="jk ${ui.joker === key ? 'on' : ''}" data-jk="${key}" ${dis ? 'disabled' : ''} onclick="setJoker('${key}')"><span class="n">${n}</span><i>${icon}</i>${label}</button>`; };
-  const gm = used.group_opinion;
-  return `<div class="box"><h3>Joker <span style="text-transform:none;letter-spacing:0">· max. ${maxQ} pro Frage</span></h3>
-    <div class="jokers">${inst('fifty_fifty', '½', '50:50')}${inst('group_opinion', '👥', 'Gruppe')}${tog('han_solo', '⭐', 'Han Solo')}${tog('safety_net', '🛟', 'Netz')}</div>
-    ${gm ? `<p class="hint" style="margin:10px 0 0">Gruppe (bisher ${gm.total} Antworten): A ${gm.A} · B ${gm.B} · C ${gm.C} · D ${gm.D}</p>` : ''}
-    <p class="hint" style="margin:10px 0 0" id="jkHint">½ und 👥 wirken sofort (zweimal tippen). ⭐ Han Solo: +${S.settings.han_solo_bonus}, wenn nur du richtig liegst (ab ${S.settings.han_solo_min_players} Spielern). 🛟 Netz: nur halber Verlust.</p></div>`;
+  const tile = key => { const [icon, label] = JK[key], inst = key === 'fifty_fifty' || key === 'group_opinion';
+    const on = inst ? !!used[key] : ui.joker === key;
+    return `<button class="jk ${on ? 'on' : ''}" data-jkey="${key}" ${!jokerUsable(key) ? 'hidden' : ''} ${inst && used[key] ? 'disabled' : ''}
+      onclick="${inst ? `askJoker('${key}')` : `setJoker('${key}')`}"><span class="n">${left[key] || 0}</span><i>${icon}</i>${inst && used[key] ? 'benutzt' : label}</button>`; };
+  const gm = used.group_opinion, ff = used.fifty_fifty;
+  return `<div class="box" id="jkBox"><h3>Joker <span style="text-transform:none;letter-spacing:0">· max. ${S.settings.max_jokers_per_question} pro Frage</span></h3>
+    <div class="jokers">${Object.keys(JK).map(tile).join('')}</div>
+    ${ff ? `<p class="hint" style="margin:10px 0 0">½ 50:50: ${ff.removed.join(' und ')} sind raus.</p>` : ''}
+    ${gm ? `<p class="hint" style="margin:10px 0 0">👥 Gruppe (bisher ${gm.total} ${gm.total === 1 ? 'Antwort' : 'Antworten'}): A ${gm.A} · B ${gm.B} · C ${gm.C} · D ${gm.D}</p>` : ''}
+    <p class="hint" style="margin:10px 0 0" id="jkHint"></p></div>`;
 }
+/* Sichtbarkeit live nachziehen (z. B. Gruppe erscheint, sobald jemand abgegeben hat; Netz nur mit Einsatz) */
+function syncJokers() {
+  const box = $('#jkBox'); if (!box) return;
+  let any = false;
+  box.querySelectorAll('[data-jkey]').forEach(b => { const ok = jokerUsable(b.dataset.jkey); if (b.hidden === ok) b.hidden = !ok; any = any || ok; });
+  box.hidden = !any;
+  const h = $('#jkHint'), parts = [];
+  if (jokerUsable('han_solo')) parts.push(`⭐ Han Solo: +${S.settings.han_solo_bonus}, wenn nur du richtig liegst`);
+  if (jokerUsable('safety_net')) parts.push('🛟 Netz: bei falscher Antwort nur halber Verlust');
+  if (h) h.textContent = parts.join(' · ');
+  if (h) h.hidden = !parts.length;
+}
+function askJoker(key) { ui.ask = { type: 'joker', key }; render(true); }
+function useJoker(key) {
+  ui.ask = null;
+  act(() => rpc('quiz_use_joker', { p_player_token: ID.playerToken, p_joker: key }), () => {
+    setTimeout(() => {   // Wirkung zeigen: zu den Antworten scrollen
+      const a = $('.answers'); if (a) a.scrollIntoView({ behavior: calm() ? 'auto' : 'smooth', block: 'center' });
+      const u = M && M.jokers_this_question;
+      if (key === 'fifty_fifty' && u && u.fifty_fifty) toast(`50:50 – ${u.fifty_fifty.removed.join(' und ')} sind raus.`);
+      if (key === 'group_opinion') toast('Die Zahlen an den Antworten zeigen, was die anderen gewählt haben.');
+    }, 80);
+  });
+}
+
 function stakeBox() {
-  const pts = M.points;
+  const pts = M.points, max = maxStake(), capped = max < pts;
   if (pts === 0) return `<div class="note">Du hast 0 Punkte – du spielst ohne Einsatz weiter mit. Antworten kannst du trotzdem.</div>`;
-  const half = Math.round(pts / 2);
-  const chips = [0, half, pts].filter((v, i, a) => a.indexOf(v) === i);
+  const chips = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
   return `<div class="box"><h3>Dein Einsatz</h3>
     <div class="stake"><button class="round" onclick="setStake(ui.stake-1)" aria-label="weniger">−</button>
-      <div style="text-align:center"><div class="num" id="stakeVal">${ui.stake}</div><div class="of">von ${pts} Punkten</div></div>
+      <div style="text-align:center"><div class="num" id="stakeVal">${ui.stake}</div><div class="of">${capped ? `höchstens ${max} · du hast ${pts}` : `von ${pts} Punkten`}</div></div>
       <button class="round" onclick="setStake(ui.stake+1)" aria-label="mehr">+</button></div>
-    <input id="stakeRange" type="range" min="0" max="${pts}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
-    <div class="chips">${chips.map(v => `<button class="chip ${ui.stake === v ? 'on' : ''}" data-chip="${v}" onclick="setStake(${v})">${v === pts ? 'All-in' : v === 0 ? 'Kein Einsatz' : 'Hälfte'}</button>`).join('')}</div></div>`;
+    <input id="stakeRange" type="range" min="0" max="${max}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
+    <div class="chips">${chips.map(v => `<button class="chip ${ui.stake === v ? 'on' : ''}" data-chip="${v}" onclick="setStake(${v})">${v === 0 ? 'Kein Einsatz' : v === max ? (capped ? `Maximum (${max})` : 'All-in') : 'Hälfte'}</button>`).join('')}</div></div>`;
 }
 function answeredStrip() {
   const req = S.players.filter(p => p.required), sz = isTV() ? 72 : 44;
@@ -956,8 +993,8 @@ function questionView() {
   if (sub) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}
     <div class="status ok"><span class="ic">🔒</span><div><b>Antwort ${sub.answer} ist abgegeben</b>Einsatz ${sub.stake} ${sub.stake === 1 ? 'Punkt' : 'Punkte'}${sub.joker ? ` · ${sub.joker === 'han_solo' ? '⭐ Han Solo' : '🛟 Sicherheitsnetz'}` : ''} – jetzt heißt es warten.</div></div>
     ${waitBox}${progressBar()}<div class="grow"></div></div>${menuView()}</div>`;
-  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}<div class="hint" style="text-align:center;margin:-6px 0 -4px">Schon geantwortet: <b id="answered">${answeredCount()}</b></div>${stakeBox()}${jokerBox()}${progressBar()}<div class="grow"></div>
-    <div class="actions"><button class="btn ${ui.answer ? '' : 'wait'}" id="submitBtn" onclick="A.submit()">${submitTxt()}</button></div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}<div class="hint" style="text-align:center;margin:-6px 0 -4px">Schon geantwortet: <b id="answered">${answeredCount()}</b></div>${jokerBox()}${stakeBox()}${progressBar()}<div class="grow"></div>
+    <div class="actions"><button class="btn ${ui.answer ? '' : 'wait'}" id="submitBtn" onclick="A.submit()">${submitTxt()}</button></div></div>${menuView()}${askView()}</div>`;
 }
 
 /* Vorheriger Stand aus der Auflösung zurückrechnen (Punkte − Änderung) → Platzwechsel ohne gespeicherten Verlauf */
@@ -1107,6 +1144,7 @@ function live() {   // kleine Änderungen ohne komplettes Neuzeichnen (Eingaben 
   if (!S) return;
   const a = $('#answered'); if (a && S.status === 'question_active') a.textContent = answeredCount();
   document.querySelectorAll('[data-pa]').forEach(e => { const p = pl(e.dataset.pa); if (p && p.answered && !e.querySelector('.ok')) { e.querySelector('.av').insertAdjacentHTML('beforeend', '<span class="ok">✓</span>'); e.classList.remove('wait'); } });
+  syncJokers();
   const wm = $('#waitmsg'); if (wm && S.status === 'question_active') { const t = waitingFor(); if (wm.innerHTML !== t) wm.innerHTML = t; }
   const w = $('#waiting'); if (w) { const t = revealWaiting(); if (w.innerHTML !== t) w.innerHTML = t; }
   document.querySelectorAll('.row[data-rid]').forEach(e => { const p = pl(e.dataset.rid); e.classList.toggle('isready', !!(p && p.required && p.is_ready)); });
