@@ -2,9 +2,9 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.2.4">
+<meta name="app-version" content="0.3.0">
 <title>Quiz</title>
 <style>
   :root {
@@ -23,15 +23,18 @@
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }   /* kein Doppeltipp-Zoom beim schnellen Tippen */
   html, body { margin: 0; min-height: 100%; }
   body { font: 16px/1.4 var(--sans); color: var(--text); background: var(--ink); }
   button, input, select { font: inherit; color: inherit; }
-  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   button:disabled { cursor: not-allowed; }
 
   /* ---------- Rahmen ---------- */
   .screen { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: var(--ink); animation: fade .25s ease; }
+  .screen.noanim { animation: none; }
+  .tile.pop { animation: pop .3s ease; }
+  @keyframes pop { from { opacity: 0; transform: scale(.85); } }
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   @media (min-width: 600px) {
     body:not(.tv) { background: radial-gradient(1200px 700px at 20% 0%, #f1e3da, #e4d3c8 55%, #d9c6bb); padding: 24px; }
@@ -223,6 +226,16 @@
     body.start .picker { grid-template-columns: repeat(8, 1fr); gap: 8px; }
     body.start .hero-av { width: 130px; }
   }
+  /* ---------- Tutorial ---------- */
+  .tut-ic { width: 88px; height: 88px; border-radius: 28px; background: var(--sel); display: grid; place-items: center; font-size: 46px; margin: 4px auto 0; }
+  .tut-body { font-size: 17px; line-height: 1.5; }
+  .tut-body p { margin: 0 0 12px; }
+  .tut-body .ex { background: #f6f1ec; border-radius: 16px; padding: 14px; margin: 0 0 12px; }
+  .tut-body ul.tl { margin: 0 0 12px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .tut-body ul.tl li { background: #f6f1ec; border-radius: 14px; padding: 10px 12px; }
+  .dots { display: flex; gap: 8px; justify-content: center; }
+  .dots i { width: 8px; height: 8px; border-radius: 4px; background: var(--seg-off); transition: all .2s; }
+  .dots i.on { background: var(--ink); width: 22px; }
   .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   @media (max-width: 900px) { .twocol { grid-template-columns: 1fr; } }
 </style>
@@ -282,7 +295,7 @@ let S = null;           // öffentlicher Zustand
 let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
 const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
-let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false,
+let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900, solo: false, tutOpen: false, tutStep: 0,
   menu: false, confirm: null, reason: '', stake: 1, answer: null, joker: '', sv: {} };
 let pool = null;
 let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
@@ -583,23 +596,76 @@ function menuView() {
   return `<div class="scrim" onclick="if(event.target===this)setMenu(false)"><div class="menu">${h}</div></div>`;
 }
 
+const tvkFor = n => n <= 4 ? 9.2 : n <= 8 ? 7.4 : n <= 12 ? 6.3 : 4.6;
+const tileStatus = p => [ID && p.id === ID.playerId ? 'du' : '', p.is_admin ? 'Admin' : p.is_ready ? '✓ bereit' : 'wartet …'].filter(Boolean).join(' · ');
+const tileHtml = p => `<div class="tile" data-pid="${p.id}">${av(p.avatar)}
+      <div class="nm">${esc(p.nickname)}</div>
+      <div class="st ${p.is_ready ? 'ready' : ''}">${tileStatus(p)}</div>
+      ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="A.kick('${p.id}')">×</button>` : ''}</div>`;
+/* Lobby ohne Neuzeichnen aktualisieren: Kacheln einfügen/entfernen/umsortieren, Status ändern.
+   Bilder bleiben im DOM – es flackert nichts, wenn andere beitreten oder „bereit“ drücken. */
+function patchLobby() {
+  const box = $('#tiles'); if (!box) return;
+  const have = new Map([...box.children].map(e => [e.dataset.pid, e]));
+  S.players.forEach((p, i) => {
+    let el = have.get(p.id);
+    if (!el) { box.insertAdjacentHTML('beforeend', tileHtml(p)); el = box.lastElementChild; el.classList.add('pop'); }
+    else {
+      have.delete(p.id);
+      const st = el.querySelector('.st'), t = tileStatus(p);
+      if (st.textContent !== t) st.textContent = t;
+      st.classList.toggle('ready', !!p.is_ready);
+    }
+    const cur = box.children[i]; if (cur !== el) box.insertBefore(el, cur || null);
+  });
+  have.forEach(e => e.remove());
+  const c = $('#pcount'); if (c) c.textContent = `${S.players.length} Spieler`;
+  box.style.setProperty('--tvk', tvkFor(S.players.length));
+  const need = S.settings.min_players, sb = $('#startBtn'), sh = $('#startHint');
+  if (sb) sb.disabled = S.players.length < need;
+  if (sh) sh.hidden = S.players.length >= need;
+}
+
+/* ---------- Tutorial (vor dem „Bereit“) ---------- */
+const tutKey = () => 'quiz.tut.' + (ID ? ID.sid : '');
+const tutSeen = () => { try { return !!sessionStorage.getItem(tutKey()); } catch { return true; } };
+const tutActive = () => !!(ID && S && S.status === 'lobby' && ID.playerToken && !isTV() && (ui.tutOpen || !tutSeen()));
+function tutOpen() { ui.tutOpen = true; ui.tutStep = 0; render(true); window.scrollTo(0, 0); }
+function tutGo(d) { ui.tutStep = Math.max(0, Math.min(tutSteps().length - 1, ui.tutStep + d)); render(true); window.scrollTo(0, 0); }
+function tutDone() { try { sessionStorage.setItem(tutKey(), '1'); } catch {} ui.tutOpen = false; ui.tutStep = 0; render(true); window.scrollTo(0, 0); }
+function tutSteps() {
+  const c = S.settings, j = c.jokers;
+  return [
+    { icon: '🎲', title: 'So läuft ein Spiel', body: `<p>Alle spielen gleichzeitig. Jede Frage hat vier Antworten (A–D) und <b>${c.answer_seconds} Sekunden</b> Zeit.</p><p>Es gibt <b>${c.question_count} Fragen</b>. Wer am Ende die meisten Punkte hat, gewinnt. Du startest mit <b>${c.start_points} Punkten</b>.</p>` },
+    { icon: '🎯', title: 'Dein geheimer Einsatz', body: `<p>Vor dem Absenden setzt du Punkte ein: von 0 bis zu allen, die du hast. Die anderen sehen deinen Einsatz erst bei der Auflösung.</p><div class="ex"><b>Beispiel:</b> Du hast 10 Punkte und setzt 4.<br>Richtig: <span class="pos"><b>14 Punkte</b></span> · Falsch: <span class="neg"><b>6 Punkte</b></span></div><p>Alles setzen (All-in) bringt am meisten – kann dich aber auf 0 bringen.</p>` },
+    { icon: '✅', title: 'Antworten & bestätigen', body: `<p>Wähle eine Antwort, stelle deinen Einsatz ein und tippe auf <b>Antwort bestätigen</b>. Danach ist alles endgültig.</p><p>Schaffst du es nicht rechtzeitig, zählt die Frage als falsch – aber ohne Einsatz, du verlierst also nichts.</p>` },
+    { icon: '⭐', title: 'Joker', body: `<ul class="tl"><li><b>50:50</b> – zwei falsche Antworten verschwinden (${j.fifty_fifty}× pro Runde)</li><li><b>Gruppe</b> – du siehst, was die anderen bisher gewählt haben (${j.group_opinion}×)</li><li><b>Han Solo</b> – +${c.han_solo_bonus} Bonus, wenn nur du richtig liegst, ab ${c.han_solo_min_players} Spielern (${j.han_solo}×)</li><li><b>Netz</b> – bei einer falschen Antwort verlierst du nur die Hälfte (${j.safety_net}×)</li></ul><p class="hint">Pro Frage sind höchstens ${c.max_jokers_per_question} Joker erlaubt.</p>` },
+    { icon: '🏆', title: 'Auflösung & Rangliste', body: `<p>Nach jeder Frage siehst du die richtige Antwort, was die anderen gesetzt haben und die Rangliste. Tippe auf <b>Weiter</b>, wenn es weitergehen kann – es geht los, sobald alle bereit sind.</p><p>Hast du 0 Punkte, spielst du ohne Einsatz weiter mit und musst nicht auf „Weiter“ tippen.</p>` },
+  ];
+}
+function tutorialView() {
+  const steps = tutSteps(), i = Math.min(ui.tutStep, steps.length - 1), st = steps[i], last = i === steps.length - 1;
+  return `<div class="screen"><div class="hero"><div class="topbar"><span style="width:96px"></span><div class="mid">Spielanleitung</div><button class="link" style="color:#fff;width:96px;font-size:14px;text-align:right" onclick="tutDone()">Überspringen</button></div>
+    <div class="meta" style="margin-top:18px"><span>Schritt ${i + 1} von ${steps.length}</span></div><h1 class="q">${st.title}</h1></div>
+    <div class="sheet"><div class="tut-ic">${st.icon}</div><div class="tut-body">${st.body}</div>
+      <div class="dots">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div><div class="grow"></div>
+      <div class="actions">${last ? '<button class="btn" onclick="tutDone()">Verstanden – zur Lobby</button>' : '<button class="btn" onclick="tutGo(1)">Weiter</button>'}${i > 0 ? '<button class="btn ghost" onclick="tutGo(-1)">Zurück</button>' : ''}</div></div></div>`;
+}
+
 function lobbyView() {
   const cfg = S.settings, m = me(), tv = isTV();
-  const tiles = S.players.map(p => `<div class="tile">${av(p.avatar)}
-      <div class="nm">${esc(p.nickname)}</div>
-      <div class="st ${p.is_ready ? 'ready' : ''}">${[ID && p.id === ID.playerId ? 'du' : '', p.is_admin ? 'Admin' : p.is_ready ? '✓ bereit' : 'wartet …'].filter(Boolean).join(' · ')}</div>
-      ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="A.kick('${p.id}')">×</button>` : ''}</div>`).join('');
+  const tiles = S.players.map(tileHtml).join('');
   const share = `<div class="qr">${qrSvg(joinUrl())}<div class="url">${esc(joinUrl())}</div></div>`;
   const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
   const need = cfg.min_players;
   const action = isAdmin()
-    ? `<button class="btn" onclick="A.start()" ${S.players.length < need ? 'disabled' : ''}>Spiel starten</button>${S.players.length < need ? `<div class="hint" style="text-align:center">Mindestens ${need} Spieler nötig</div>` : ''}`
+    ? `<button class="btn" id="startBtn" onclick="A.start()" ${S.players.length < need ? 'disabled' : ''}>Spiel starten</button><div class="hint" id="startHint" style="text-align:center" ${S.players.length < need ? '' : 'hidden'}>Mindestens ${need} Spieler nötig</div>`
     : tv ? '<div class="hint" style="text-align:center;width:100%">Warte auf den Start …</div>'
     : `<button class="btn ${m && m.is_ready ? 'ghost' : ''}" onclick="A.ready(${m && m.is_ready ? 'false' : 'true'})">${m && m.is_ready ? 'Doch nicht bereit' : 'Ich bin bereit'}</button>`;
   const hero = `<div class="hero">${topbar('Lobby')}<div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>`;
-  const n = S.players.length, tvk = n <= 4 ? 9.2 : n <= 8 ? 7.4 : n <= 12 ? 6.3 : 4.6;
-  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0">${S.players.length} Spieler</h3><div class="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
-  return `<div class="screen">${hero}<div class="sheet">${share}<div><h3 class="f">${S.players.length} Spieler</h3><div class="tiles">${tiles}</div></div>${chips}<div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  const tvk = tvkFor(S.players.length);
+  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol lobby-cols"><div>${share}</div><div><h3 class="f" style="margin-top:0"><span id="pcount">${S.players.length} Spieler</span></h3><div class="tiles" id="tiles" style="--tvk:${tvk}">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${share}<div><h3 class="f"><span id="pcount">${S.players.length} Spieler</span></h3><div class="tiles" id="tiles">${tiles}</div></div>${chips}<button class="link" onclick="tutOpen()">Spielanleitung ansehen</button><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
 }
 
 const ownResult = () => S.reveal && ID && S.reveal.results.find(r => r.player_id === ID.playerId);
@@ -713,15 +779,19 @@ function finishedView() {
 /* ---------- Rendering ---------- */
 function viewKey() {
   if (!ID || !S) return 'home' + ui.step + ui.mode + ui.avatar + ui.taken.join() + (pool ? pool.active : '') + ui.solo;
+  if (tutActive()) return 'tut' + ui.tutStep;
   const st = S.status, ex = '|' + ui.menu + ui.confirm;
-  if (st === 'lobby') return 'lobby' + JSON.stringify(S.players.map(p => [p.id, p.nickname, p.avatar, p.is_ready])) + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players + ex;
+  if (st === 'lobby') return 'lobby' + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players + ex;   // Spielerliste wird per patchLobby() gepflegt
   if (st === 'question_active') return 'q' + S.question.sq_id + (M ? (M.submission ? 's' : 'o') + M.points + JSON.stringify(M.jokers_this_question) + JSON.stringify(M.jokers_left) : 'tv') + ex;
   if (st === 'reveal') return 'r' + S.question.sq_id + (M ? M.is_ready : '') + S.players.length + ex;
   return 'f' + st;
 }
+let lastViewId = '';
+const viewId = () => (!ID || !S) ? 'home' + ui.step : tutActive() ? 'tut' : S.status + '|' + (S.question ? S.question.sq_id : '');
 function render(force) {
   const key = viewKey();
   if (key === lastKey && !force) return live();
+  const vid = viewId(), sameView = vid === lastViewId, sy = window.scrollY; lastViewId = vid;
   const a = document.activeElement, keep = a && a.id && a.tagName === 'INPUT' ? { id: a.id, pos: a.selectionStart } : null;
   lastKey = key;
   document.body.classList.toggle('tv', !!isTV());
@@ -729,7 +799,8 @@ function render(force) {
   document.title = S && ID && S.status !== 'finished' ? `${APP_NAME} ${S.code}` : APP_NAME;
   const app = $('#app');
   if (!ID || !S) { app.innerHTML = homeView(); if (!pool) loadPool(); }
-  else app.innerHTML = { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
+  else app.innerHTML = tutActive() ? tutorialView() : { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
+  if (sameView) { document.querySelectorAll('.screen').forEach(e => e.classList.add('noanim')); window.scrollTo(0, sy); }   // gleiche Ansicht: nicht neu einblenden
   if (keep) { const e = document.getElementById(keep.id); if (e) { e.focus(); try { e.setSelectionRange(keep.pos, keep.pos); } catch {} } }
   live();
 }
@@ -738,6 +809,7 @@ function live() {   // kleine Änderungen ohne komplettes Neuzeichnen (Eingaben 
   const a = $('#answered'); if (a && S.status === 'question_active') a.textContent = answeredCount();
   document.querySelectorAll('[data-pa]').forEach(e => { const p = pl(e.dataset.pa); if (p && p.answered && !e.querySelector('.ok')) e.querySelector('.av').insertAdjacentHTML('beforeend', '<span class="ok">✓</span>'); });
   const w = $('#waiting'); if (w) w.textContent = S.players.filter(p => p.required && !p.is_ready).length;
+  if (S.status === 'lobby' && !tutActive()) patchLobby();
 }
 async function loadPool() { try { pool = await rpc('quiz_pool_info'); if (!ID) { lastKey = ''; render(); } } catch {} }
 
