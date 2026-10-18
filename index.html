@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.6.2">
+<meta name="app-version" content="0.6.3">
 <title>Gambled Knowledge</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2248%22%20fill%3D%22%23e07a67%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2241%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%2211%22%20stroke-dasharray%3D%2212.9%2019.3%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2231%22%20fill%3D%22%23e07a67%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.5%22%20stroke-dasharray%3D%223%203%22/%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2225%22%20fill%3D%22%23fff%22/%3E%3Ctext%20x%3D%2250%22%20y%3D%2262%22%20text-anchor%3D%22middle%22%20font-family%3D%22Georgia%2Cserif%22%20font-weight%3D%22700%22%20font-size%3D%2234%22%20fill%3D%22%2317484d%22%3E%3F%3C/text%3E%3C/svg%3E">
 <style>
@@ -351,6 +351,16 @@
   body.tv .revcols .ans { min-height: 0; padding: 1.6vh 22px; }
   body.tv .note { font-size: clamp(16px, 1.3vw, 26px); }
   body.tv .hero .q.small { font-size: clamp(26px, 2.8vw, 44px); }
+
+  /* ---------- Zwischenstand ---------- */
+  .stand .smsg { margin: 0 0 10px; font-size: 14px; line-height: 1.45; }
+  .srows { display: flex; flex-direction: column; }
+  .srow { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 15px; }
+  .srow .rk { width: 18px; text-align: center; font-weight: 700; color: var(--muted); font-size: 13px; }
+  .srow .nm { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .srow .gap { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .srow .pt { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+  .srow.me { background: linear-gradient(90deg, var(--sel), #fff0); margin: 0 -14px; padding-left: 14px; padding-right: 14px; border-radius: 10px; }
 
   /* ---------- 0.6.0: Gambled Knowledge – Pokerchips ---------- */
   .brand { display: flex; align-items: center; gap: 16px; margin-top: 26px; }
@@ -1065,14 +1075,38 @@ function useJoker(key) {
 function stakeBox() {
   const pts = M.points, max = maxStake(), capped = max < pts;
   if (pts === 0) return `<div class="note">Du hast 0 Punkte – du spielst ohne Einsatz weiter mit. Antworten kannst du trotzdem.</div>`;
-  const chips = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
   return `<div class="box"><h3>Dein Einsatz</h3>
     <div class="stake"><button class="round" onclick="setStake(ui.stake-1)" aria-label="weniger">−</button>
       <div style="text-align:center"><div class="num" id="stakeVal" aria-live="polite">${ui.stake}</div><div class="of">${capped ? `höchstens ${max} · du hast ${pts}` : `von ${pts} Punkten`}</div></div>
       <button class="round" onclick="setStake(ui.stake+1)" aria-label="mehr">+</button></div>
     ${chipStacksHtml(ui.stake)}
     <input id="stakeRange" type="range" min="0" max="${max}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
-    <div class="chips">${chips.map(v => `<button class="chip ${ui.stake === v ? 'on' : ''}" data-chip="${v}" onclick="setStake(${v})">${v === 0 ? 'Kein Einsatz' : v === max ? (capped ? `Maximum (${max})` : 'All-in') : 'Hälfte'}</button>`).join('')}</div></div>`;
+    </div>`;
+}
+/* Zwischenstand unten in der Frage: wo stehe ich, wie weit ist es nach vorn/hinten, was bringt voller Einsatz? */
+function standingsBox() {
+  const m = me(); if (!m || S.players.length < 2) return '';
+  const ps = S.players, lead = ps[0], ahead = ps.filter(p => p.points > m.points), behind = ps.filter(p => p.points < m.points);
+  const nm = p => esc(p.nickname), P = n => `${n} ${n === 1 ? 'Punkt' : 'Punkte'}`;
+  let msg;
+  if (!ahead.length) {
+    const tied = ps.filter(p => p.id !== m.id && p.points === m.points);
+    msg = tied.length ? `<b>Du teilst dir Platz 1</b> mit ${tied.map(nm).join(', ')}.`
+      : `<b>Du führst</b> mit ${P(m.points - behind[0].points)} Vorsprung vor ${nm(behind[0])}.`;
+  } else {
+    const next = ahead[ahead.length - 1];
+    msg = `<b>Dir fehlen ${P(lead.points - m.points)}</b> auf ${nm(lead)} (Platz 1)${next.id !== lead.id ? `, ${P(next.points - m.points)} auf ${nm(next)} (Platz ${next.rank})` : ''}.`;
+  }
+  const mx = maxStake();
+  if (mx > 0 && ahead.length) {
+    const nr = ps.filter(p => p.id !== m.id && p.points > m.points + mx).length + 1;
+    msg += ` Mit vollem Einsatz (${mx}) kämst du bei richtiger Antwort auf <b>Platz ${nr}</b>.`;
+  }
+  return `<div class="box stand"><h3>Zwischenstand</h3><p class="smsg">${msg}</p><div class="srows">${ps.map(p => {
+    const d = p.points - m.points;
+    return `<div class="srow ${p.id === m.id ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar, 26)}<span class="nm">${p.id === m.id ? 'Du' : nm(p)}</span>
+      <span class="gap">${p.id === m.id ? '' : d > 0 ? `+${d}` : d < 0 ? `−${-d}` : '±0'}</span><span class="pt">${chipIco()}${p.points}</span></div>`;
+  }).join('')}</div></div>`;
 }
 function answeredStrip() {
   const req = S.players.filter(p => p.required), sz = isTV() ? 72 : 44;
@@ -1094,8 +1128,8 @@ function questionView() {
   const sub = M.submission;
   if (sub) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}
     <div class="status ok"><span class="ic">🔒</span><div><b>Antwort ${sub.answer} ist abgegeben</b>Einsatz ${sub.stake} ${sub.stake === 1 ? 'Punkt' : 'Punkte'}${sub.joker ? ` · ${sub.joker === 'han_solo' ? '⭐ Han Solo' : '🛟 Sicherheitsnetz'}` : ''} – jetzt heißt es warten.</div></div>
-    ${waitBox}${progressBar()}<div class="grow"></div></div>${menuView()}</div>`;
-  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}<div class="hint" style="text-align:center;margin:-6px 0 -4px">Schon geantwortet: <b id="answered">${answeredCount()}</b></div>${jokerBox()}${stakeBox()}${progressBar()}<div class="grow"></div>
+    ${waitBox}${progressBar()}${standingsBox()}<div class="grow"></div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}<div class="hint" style="text-align:center;margin:-6px 0 -4px">Schon geantwortet: <b id="answered">${answeredCount()}</b></div>${jokerBox()}${stakeBox()}${progressBar()}${standingsBox()}<div class="grow"></div>
     <div class="actions"><button class="btn ${ui.answer ? '' : 'wait'}" id="submitBtn" onclick="A.submit()">${submitTxt()}</button></div></div>${menuView()}${askView()}</div>`;
 }
 
