@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.2.1">
+<meta name="app-version" content="0.2.2">
 <title>Quiz</title>
 <style>
   :root {
@@ -196,6 +196,24 @@
   body.tv .row .av { --s: 64px; }
   body.tv .rows { columns: 2; column-gap: 56px; }
   body.tv .row { break-inside: avoid; }
+  /* Breite Bildschirme (Laptop/PC): Startablauf als zweispaltige Karte statt schmalem Handy-Streifen */
+  @media (min-width: 900px) {
+    body.start { display: flex; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: 32px; }
+    body.start #app { width: 100%; }
+    body.start .screen { max-width: 1080px; width: 100%; flex-direction: row; min-height: min(700px, calc(100dvh - 64px)); border-radius: 40px; margin: 0 auto; }
+    body.start .hero { flex: 0 0 40%; padding: 40px 48px; display: flex; flex-direction: column; }
+    body.start .hero .topbar { justify-content: flex-start; gap: 12px; }
+    body.start .hero .topbar .mid { text-align: left; flex: none; }
+    body.start .hero .q { font-size: 44px; margin-top: auto; }
+    body.start .hero .sub { font-size: 17px; margin-top: 12px; margin-bottom: auto; }
+    body.start .sheet { border-radius: 0; margin: 0; box-shadow: none; padding: 48px 56px 0; flex: 1; }
+    body.start .sheet > * { width: 100%; max-width: 520px; }
+    body.start .sheet { justify-content: center; align-items: flex-start; padding: 48px 56px; }
+    body.start .sheet > .grow { display: none; }
+    body.start .actions { position: static; margin: 8px 0 0; padding: 0; background: none; }
+    body.start .picker { grid-template-columns: repeat(8, 1fr); gap: 8px; }
+    body.start .hero-av { width: 130px; }
+  }
   .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
   @media (max-width: 900px) { .twocol { grid-template-columns: 1fr; } }
 </style>
@@ -255,7 +273,7 @@ let S = null;           // öffentlicher Zustand
 let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
 const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
-let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: false,
+let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: window.innerWidth >= 900,
   menu: false, confirm: null, reason: '', stake: 1, answer: null, joker: '', sv: {} };
 let pool = null;
 let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
@@ -696,6 +714,7 @@ function render(force) {
   const a = document.activeElement, keep = a && a.id && a.tagName === 'INPUT' ? { id: a.id, pos: a.selectionStart } : null;
   lastKey = key;
   document.body.classList.toggle('tv', !!isTV());
+  document.body.classList.toggle('start', !ID || !S);
   document.title = S && ID && S.status !== 'finished' ? `${APP_NAME} ${S.code}` : APP_NAME;
   const app = $('#app');
   if (!ID || !S) { app.innerHTML = homeView(); if (!pool) loadPool(); }
