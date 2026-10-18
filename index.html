@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
-<meta name="app-version" content="0.4.0">
+<meta name="app-version" content="0.4.1">
 <title>Quiz</title>
 <style>
   :root {
@@ -68,7 +68,9 @@
   .link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; text-align: center; padding: 6px; }
 
   /* ---------- Antworten ---------- */
-  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .answers { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .ans > span:not(.cnt):not(.voters) { min-width: 0; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }   /* lange deutsche Wörter trennen statt Karte sprengen */
+  .q { -webkit-hyphens: auto; hyphens: auto; overflow-wrap: break-word; }
   .ans { position: relative; text-align: left; background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 18px 14px; min-height: 66px; font-weight: 600; font-size: 17px; display: flex; gap: 6px; align-items: center; box-shadow: 0 6px 16px -10px rgba(23,72,77,.35); transition: all .15s; }
   .ans b { font-weight: 700; }
   .ans:active:not(:disabled) { transform: scale(.98); }
@@ -738,6 +740,7 @@ function homeView() {
         <li><span><b>Einer erstellt die Runde</b> – auf dem Handy oder auf dem Fernseher/Laptop.</span></li>
         <li><span><b>Alle anderen scannen den QR-Code</b> mit der Handykamera oder tippen den Code bei „Spiel beitreten“ ein.</span></li>
         <li><span><b>Jeder spielt auf dem eigenen Handy</b> – antworten, Punkte setzen, gewinnen.</span></li></ol></div>
+      <p class="hint" style="text-align:center;margin:4px 0 calc(10px + env(safe-area-inset-bottom))">Ein Teil der Fragen stammt aus der <a href="https://opentdb.com" target="_blank" rel="noopener" style="color:inherit">Open Trivia Database</a> (übersetzt, <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.de" target="_blank" rel="noopener" style="color:inherit">CC BY-SA 4.0</a>).</p>
       <div class="grow"></div></div></div>`;
 }
 
