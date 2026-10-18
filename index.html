@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17484d">
 <script>(function(){try{var t=localStorage.getItem('quiz.theme');if(t!=='dark'&&t!=='light')t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name=theme-color]');if(m&&t==='dark')m.content='#0c2326';}catch(e){}})();</script>
-<meta name="app-version" content="0.8.0">
+<meta name="app-version" content="0.8.2">
 <title>Gambled Knowledge</title>
-<link rel="icon" type="image/svg+xml" href="icons/logo.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
-<link rel="shortcut icon" href="icons/favicon.ico">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=2">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=2">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=2">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120.png?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png?v=2">
+<link rel="shortcut icon" href="icons/favicon.ico?v=2">
+<link rel="icon" type="image/svg+xml" href="icons/logo.svg?v=2">
+<link rel="manifest" href="manifest.webmanifest?v=2">
 <meta name="apple-mobile-web-app-title" content="Gambled Knowledge">
 <style>
   :root {
@@ -938,7 +941,7 @@ function applyTheme() {
 }
 function toggleTheme() { try { localStorage.setItem(THEME_KEY, themeNow() === 'dark' ? 'light' : 'dark'); } catch {} applyTheme(); }
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (!themeStored()) applyTheme(); }); } catch {}
-const themeBtn = () => `<button class="iconbtn themebtn" aria-label="Darstellung wechseln" onclick="toggleTheme()">${themeIcon()}</button>`;
+const themeBtn = () => `<button class="iconbtn themebtn" aria-label="${themeNow() === 'dark' ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln'}" onclick="toggleTheme()">${themeIcon()}</button>`;
 const topbar = (mid, left) => `<div class="topbar">
   ${left || '<button class="iconbtn ghost">‹</button>'}<span class="iconbtn ghost"></span><div class="mid">${mid || ''}</div>
   ${isAdmin() && S && S.status !== 'finished' ? `<button class="iconbtn" aria-label="Admin-Menü" onclick="setMenu(true)">${dots}</button>` : '<span class="iconbtn ghost"></span>'}${themeBtn()}</div>`;
@@ -1148,7 +1151,7 @@ document.addEventListener('touchend', e => {
 }, { passive: true });
 function tutorialView() {
   const steps = tutSteps(), i = Math.min(ui.tutStep, steps.length - 1), st = steps[i], last = i === steps.length - 1;
-  return `<div class="screen"><div class="hero"><div class="topbar"><span style="width:96px"></span><div class="mid">Spielanleitung</div><button class="link" style="color:#fff;width:96px;font-size:14px;text-align:right" onclick="tutDone()">Überspringen</button></div>
+  return `<div class="screen"><div class="hero"><div class="topbar"><span style="display:flex;width:96px">${themeBtn()}</span><div class="mid">Spielanleitung</div><button class="link" style="color:#fff;width:96px;font-size:14px;text-align:right" onclick="tutDone()">Überspringen</button></div>
     <div class="meta" style="margin-top:18px"><span>Schritt ${i + 1} von ${steps.length}</span></div><h1 class="q">${st.title}</h1></div>
     <div class="sheet"><div class="tut-ic">${st.icon}</div><div class="tut-body">${st.body}</div>
       <div class="dots">${steps.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div><div class="grow"></div>
