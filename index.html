@@ -2,58 +2,202 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="app-version" content="0.1.1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17484d">
+<meta name="app-version" content="0.2.1">
 <title>Quiz</title>
 <style>
-  /* Iteration 1: bewusst schlicht – nur Funktion, kein Design. */
-  :root { color-scheme: light dark; --line: #8886; --accent: #2a6df4; --ok: #1a8f3c; --bad: #d03030; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.4 system-ui, sans-serif; }
-  #app { max-width: 560px; margin: 0 auto; padding: 12px 14px 90px; }
-  body.tv #app { max-width: 1200px; font-size: 22px; }
-  h1, h2, h3 { margin: .6em 0 .3em; }
-  button { font: inherit; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: #8881; cursor: pointer; }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  button.danger { color: var(--bad); border-color: var(--bad); }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  input, select { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; width: 100%; }
-  input[type=range] { padding: 0; }
-  label { display: block; margin: 8px 0 2px; font-size: .9em; opacity: .8; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .row > * { flex: 1; }
-  .row > .fit { flex: 0 0 auto; }
-  .card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
-  .muted { opacity: .65; font-size: .9em; }
-  .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding: 6px 0; }
-  #timer { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.3em; }
-  #timer.low { color: var(--bad); }
-  .qtext { font-size: 1.25em; font-weight: 600; margin: 12px 0; }
-  body.tv .qtext { font-size: 2em; }
-  .answers { display: grid; gap: 8px; }
-  body.tv .answers { grid-template-columns: 1fr 1fr; }
-  .ans { text-align: left; display: flex; gap: 10px; }
-  .ans b { min-width: 1.4em; }
-  .ans.sel { outline: 3px solid var(--accent); }
-  .ans.gone { opacity: .25; text-decoration: line-through; }
-  .ans.right { background: #1a8f3c33; border-color: var(--ok); }
-  .ans.wrong { background: #d0303022; border-color: var(--bad); }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); font-size: .95em; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .pos { color: var(--ok); } .neg { color: var(--bad); }
-  .me { font-weight: 700; }
-  .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); font-size: .8em; }
-  #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 10px; max-width: 90vw; z-index: 9; display: none; }
+  :root {
+    --ink: #17484d;        /* Teal, Hauptfarbe */
+    --ink-2: #0f3a3f;
+    --coral: #e07a67;      /* Timer */
+    --sel: #dcecec;        /* gewählte Antwort */
+    --card: #ffffff;
+    --line: #e6e0d9;
+    --text: #1d2b2d;
+    --muted: #7d8f90;
+    --ok: #2b7a5b; --ok-bg: #d6ece1;
+    --bad: #cf5a45; --bad-bg: #f8dcd5;
+    --seg-off: #ddd6cf;
+    --photo: #cfcfd2;      /* Avatar-Hintergrund (Grau des Avatar-Sheets) */
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; min-height: 100%; }
+  body { font: 16px/1.4 var(--sans); color: var(--text); background: var(--ink); }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
+  button:disabled { cursor: not-allowed; }
+
+  /* ---------- Rahmen ---------- */
+  .screen { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; background: var(--ink); animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (min-width: 600px) {
+    body:not(.tv) { background: radial-gradient(1200px 700px at 20% 0%, #f1e3da, #e4d3c8 55%, #d9c6bb); padding: 24px; }
+    body:not(.tv) .screen { min-height: calc(100dvh - 48px); border-radius: 36px; overflow: clip; box-shadow: 0 30px 70px -25px rgba(40, 20, 10, .45); }
+  }
+  .hero { color: #fff; padding: calc(14px + env(safe-area-inset-top)) 22px 34px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 36px; font-size: 15px; opacity: .92; }
+  .topbar .mid { text-align: center; flex: 1; }
+  .iconbtn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 22px; line-height: 1; }
+  .iconbtn:active { background: #ffffff22; }
+  .iconbtn.ghost { visibility: hidden; }
+  .meta { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 12px; font-size: 17px; opacity: .9; }
+  .timer { background: var(--coral); color: #fff; border-radius: 14px; padding: 8px 16px; font-weight: 600; font-size: 19px; font-variant-numeric: tabular-nums; display: inline-flex; gap: 8px; align-items: center; }
+  .timer.low { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.06); background: #e5634d; } }
+  .q { font: 600 31px/1.14 var(--serif); margin: 0; letter-spacing: -.01em; }
+  .big { font: 700 46px/1 var(--serif); letter-spacing: .14em; margin: 10px 0 2px; }
+  .sub { opacity: .75; font-size: 14px; }
+
+  .sheet { flex: 1; background: #fff; border-radius: 30px 30px 0 0; margin-top: -4px; padding: 22px 18px 0; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 -10px 30px -12px rgba(0,0,0,.25); }
+  .sheet > .grow { flex: 1; }
+  .actions { position: sticky; bottom: 0; margin: 0 -18px; padding: 14px 18px calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(#fff0, #fff 32%); display: flex; flex-direction: column; gap: 10px; }
+  .btn { width: 100%; height: 58px; border-radius: 29px; background: var(--ink); color: #fff; font-weight: 600; font-size: 18px; transition: transform .12s, opacity .2s; }
+  .btn:active:not(:disabled) { transform: scale(.98); }
+  .btn:disabled { opacity: .4; }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+  .btn.soft { background: var(--sel); color: var(--ink); }
+  .btn.small { height: 44px; border-radius: 22px; font-size: 15px; }
+  .btn.danger { background: #fff; color: var(--bad); border: 1.5px solid var(--bad); }
+  .link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-size: 15px; text-align: center; padding: 6px; }
+
+  /* ---------- Antworten ---------- */
+  .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ans { position: relative; text-align: left; background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 18px 14px; min-height: 66px; font-weight: 600; font-size: 17px; display: flex; gap: 6px; align-items: center; box-shadow: 0 6px 16px -10px rgba(23,72,77,.35); transition: all .15s; }
+  .ans b { font-weight: 700; }
+  .ans:active:not(:disabled) { transform: scale(.98); }
+  .ans .chk { display: none; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+  .ans.sel { background: var(--sel); border-color: var(--ink); box-shadow: 0 10px 22px -10px rgba(23,72,77,.55); }
+  .ans.sel .chk { display: block; }
+  .ans.gone { opacity: .3; text-decoration: line-through; box-shadow: none; }
+  .ans.right { background: var(--ok-bg); border-color: var(--ok); }
+  .ans.wrong { background: var(--bad-bg); border-color: var(--bad); }
+  .ans .cnt { position: absolute; right: 10px; top: -9px; background: var(--ink); color: #fff; border-radius: 10px; font-size: 12px; padding: 1px 8px; font-weight: 600; }
+  .ans:disabled { cursor: default; color: inherit; }
+
+  /* ---------- Einsatz & Joker ---------- */
+  .box { border: 1.5px solid var(--line); border-radius: 20px; padding: 14px; }
+  .box h3 { margin: 0 0 8px; font: 600 13px var(--sans); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .stake { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .stake .num { font: 700 44px/1 var(--serif); }
+  .stake .of { color: var(--muted); font-size: 14px; }
+  .round { width: 46px; height: 46px; border-radius: 50%; background: var(--sel); color: var(--ink); font-size: 26px; display: grid; place-items: center; }
+  .round:active { transform: scale(.94); }
+  input[type=range] { width: 100%; accent-color: var(--ink); margin: 12px 0 4px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { border: 1.5px solid var(--line); border-radius: 16px; padding: 6px 14px; font-size: 14px; font-weight: 600; background: #fff; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .jokers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .jk { border: 1.5px solid var(--line); border-radius: 16px; padding: 10px 2px 8px; text-align: center; font-size: 12px; font-weight: 600; position: relative; background: #fff; transition: all .15s; }
+  .jk i { display: block; font-style: normal; font-size: 22px; margin-bottom: 2px; }
+  .jk .n { position: absolute; top: -7px; right: -4px; background: var(--ink); color: #fff; border-radius: 9px; font-size: 11px; padding: 0 6px; }
+  .jk.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .jk:disabled { opacity: .35; }
+  .hint { font-size: 13px; color: var(--muted); }
+
+  /* ---------- Fortschritt ---------- */
+  .progress { text-align: center; }
+  .progress .lbl { font-weight: 700; font-size: 15px; text-align: left; margin-bottom: 8px; }
+  .progress .lbl span { font-weight: 400; color: var(--muted); }
+  .segs { display: flex; gap: 3px; height: 28px; }
+  .segs i { flex: 1; border-radius: 3px; background: var(--seg-off); }
+  .segs i.on { background: var(--ink); }
+  .progress .left { font-size: 14px; margin-top: 10px; }
+
+  /* ---------- Avatare ---------- */
+  .av { --s: 44px; width: var(--s); height: calc(var(--s) * 1.4583); border-radius: calc(var(--s) * .2); background: var(--photo); overflow: hidden; position: relative; flex: none; display: block; }
+  .av img { position: absolute; width: 100%; left: 0; bottom: 0; display: block; }
+  .av .ok { position: absolute; right: 4%; top: 4%; width: calc(var(--s) * .38); height: calc(var(--s) * .38); border-radius: 50%; background: var(--ok); color: #fff; font-size: calc(var(--s) * .24); display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+  .avwrap { position: relative; flex: none; }
+  .avfull { border-radius: 26px; background: var(--photo); overflow: hidden; aspect-ratio: 360 / 525; position: relative; }
+  .avfull img { width: 100%; display: block; position: absolute; bottom: 0; left: 0; }
+  .picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .pick { position: relative; aspect-ratio: 360 / 525; border-radius: 16px; padding: 0; border: 3px solid transparent; transition: transform .12s; }
+  .pick .av { width: 100%; height: 100%; border-radius: 11px; }
+  .pick.on { border-color: var(--ink); transform: scale(1.06); box-shadow: 0 8px 18px -8px rgba(23,72,77,.7); }
+  .pick.taken { opacity: .28; }
+  .pick.taken::after { content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; color: #000; font-weight: 700; font-size: 22px; }
+  .hero-av { width: 150px; margin: 0 auto; }
+
+  /* ---------- Listen ---------- */
+  .rows { display: flex; flex-direction: column; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .rk { width: 22px; text-align: center; font-weight: 700; color: var(--muted); }
+  .row .nm { flex: 1; min-width: 0; font-weight: 600; }
+  .row .nm small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .row .pts { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; }
+  .row .pts small { display: block; font-size: 13px; }
+  .row.me { background: linear-gradient(90deg, var(--sel), #fff0); margin: 0 -18px; padding-left: 18px; padding-right: 18px; }
+  .pos { color: var(--ok); } .neg { color: var(--bad); } .zero { color: var(--muted); }
+  .zbadge { font-size: 11px; background: var(--seg-off); border-radius: 8px; padding: 1px 7px; margin-left: 6px; font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile { text-align: center; position: relative; }
+  .tile .av { --s: 76px; margin: 0 auto; }
+  .tile .nm { font-weight: 600; font-size: 14px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .st { font-size: 12px; color: var(--muted); }
+  .tile .st.ready { color: var(--ok); font-weight: 600; }
+  .tile .x { position: absolute; top: -4px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--bad); color: #fff; font-size: 14px; }
+  .qr { background: #fff; border: 1.5px solid var(--line); border-radius: 22px; padding: 14px; text-align: center; }
+  .qr svg { width: 200px; height: 200px; display: block; margin: 0 auto; }
+  .qr .url { font-size: 12px; color: var(--muted); word-break: break-all; margin-top: 6px; }
+  .banner { border-radius: 20px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+  .banner.ok { background: var(--ok-bg); } .banner.bad { background: var(--bad-bg); } .banner.zero { background: #efeae4; }
+  .banner .t { font: 700 24px/1.1 var(--serif); }
+  .note { background: #f6f1ec; border-radius: 16px; padding: 12px 14px; font-size: 14px; }
+
+  /* ---------- Formulare ---------- */
+  label.f, h3.f { display: block; font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .06em; }
+  input.t, select.t { width: 100%; height: 54px; border-radius: 16px; border: 1.5px solid var(--line); padding: 0 16px; background: #fff; font-size: 18px; }
+  input.t:focus, select.t:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 4px var(--sel); }
+  input.code { text-transform: uppercase; letter-spacing: .3em; text-align: center; font: 700 30px var(--serif); }
+  .seg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .seg2 button { border: 1.5px solid var(--line); border-radius: 18px; padding: 14px 10px; font-weight: 600; text-align: center; }
+  .seg2 button.on { border-color: var(--ink); background: var(--sel); }
+  .seg2 small { display: block; font-weight: 400; color: var(--muted); }
+  details.set { border: 1.5px solid var(--line); border-radius: 18px; padding: 4px 14px; }
+  details.set summary { padding: 12px 0; font-weight: 600; cursor: pointer; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-bottom: 12px; }
+  .grid2 input, .grid2 select { height: 44px; font-size: 16px; }
+
+  /* ---------- Menü ---------- */
+  .scrim { position: fixed; inset: 0; background: #0008; z-index: 20; display: flex; align-items: flex-end; justify-content: center; animation: fadeo .2s; }
+  @keyframes fadeo { from { opacity: 0; } }
+  .menu { background: #fff; width: 100%; max-width: 480px; border-radius: 28px 28px 0 0; padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; animation: up .25s ease; }
+  @keyframes up { from { transform: translateY(40px); } }
+  .menu h2 { margin: 0 0 4px; font: 600 22px var(--serif); }
+  #toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: #1d2b2d; color: #fff; padding: 12px 18px; border-radius: 16px; max-width: 92vw; z-index: 30; display: none; font-size: 15px; box-shadow: 0 10px 30px #0004; }
   #toast.err { background: var(--bad); }
-  .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; }
-  .qr svg { width: 220px; height: 220px; display: block; }
-  body.tv .qr svg { width: 320px; height: 320px; }
-  .code { font-size: 2.2em; font-weight: 800; letter-spacing: .15em; }
-  .tvgrid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-  @media (max-width: 800px) { .tvgrid { grid-template-columns: 1fr; } }
-  .admin { border-style: dashed; }
-  details > summary { cursor: pointer; padding: 4px 0; }
+
+  /* ---------- Sieger ---------- */
+  .winner { text-align: center; }
+  .winner .avfull { width: 150px; margin: 8px auto 12px; }
+  .winner .name { font: 700 30px var(--serif); }
+  .winner .pts { opacity: .8; }
+
+  /* ---------- TV ---------- */
+  body.tv { background: var(--ink); }
+  body.tv .screen { max-width: 1280px; }
+  body.tv .hero { padding: 26px 48px 44px; }
+  body.tv .q { font-size: clamp(34px, 4.2vw, 60px); }
+  body.tv .timer { font-size: 34px; padding: 12px 26px; border-radius: 20px; }
+  body.tv .meta { font-size: 26px; }
+  body.tv .sheet { padding: 34px 48px 0; gap: 26px; }
+  body.tv .actions { margin: 0 -48px; padding: 16px 48px 22px; flex-direction: row; }
+  body.tv .ans { font-size: clamp(22px, 2.6vw, 34px); min-height: 100px; border-radius: 26px; padding: 22px; }
+  body.tv .tiles { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  body.tv .tile .av { --s: 100px; }
+  body.tv .tile .nm { font-size: 18px; }
+  body.tv .qr svg { width: 280px; height: 280px; }
+  body.tv .big { font-size: 88px; }
+  body.tv .row { padding: 14px 0; font-size: 22px; }
+  body.tv .row .av { --s: 64px; }
+  body.tv .rows { columns: 2; column-gap: 56px; }
+  body.tv .row { break-inside: avoid; }
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 900px) { .twocol { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -64,20 +208,23 @@
 <script>
 'use strict';
 /* ====================================================================
-   Quiz – Frontend (Iteration 1: Funktion vor Design)
+   Quiz – Frontend (Iteration 2: Design)
    Der Browser hält KEINE Spiellogik. Er zeigt den öffentlichen Zustand
-   (quiz_state) und die private Sicht des Spielers (quiz_my_state) an und
+   (quiz_state) und die private Sicht des Spielers (quiz_my_state) und
    sendet Aktionen als RPC. Alles Verbindliche prüft der Server.
    ==================================================================== */
 const CFG = window.QUIZ_CONFIG || {};
+const APP_NAME = 'Quiz';
+const AVATARS = 15;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const ERR = {
   session_not_found: 'Diese Spielrunde gibt es nicht.', session_finished: 'Diese Runde ist bereits beendet.',
   session_full: 'Die Runde ist voll.', nickname_taken: 'Dieser Name ist schon vergeben.',
+  avatar_taken: 'Diesen Avatar hat gerade jemand anderes gewählt.', invalid_avatar: 'Bitte einen Avatar wählen.',
   invalid_nickname: 'Bitte einen Namen mit 1–20 Zeichen eingeben.', not_enough_players: 'Es fehlen noch Spieler.',
-  no_questions: 'Es sind keine aktiven Fragen in der Datenbank. seed.sql ausgeführt?',
+  no_questions: 'Es sind keine aktiven Fragen in der Datenbank.',
   wrong_phase: 'Das geht gerade nicht (andere Phase).', too_late: 'Zu spät – die Zeit ist abgelaufen.',
   already_submitted: 'Du hast schon geantwortet.', invalid_stake: 'Ungültiger Einsatz.',
   invalid_answer: 'Bitte eine Antwort wählen.', question_changed: 'Die Frage hat gewechselt.',
@@ -107,17 +254,18 @@ let ID = null;          // Identität dieses Geräts: {sid, code, role, playerTo
 let S = null;           // öffentlicher Zustand
 let M = null;           // private Sicht (nur Spieler)
 let offset = 0;         // Serverzeit - Gerätezeit (ms)
-let ui = { stake: 1, answer: null, joker: '', confirm: null, reason: '', nick: '', code: '', settingsOpen: false };
+const prof = (() => { try { return JSON.parse(localStorage.getItem('quiz.profile')) || {}; } catch { return {}; } })();
+let ui = { step: 'home', mode: 'phone', code: '', nick: prof.nick || '', avatar: prof.avatar || 0, taken: [], settingsOpen: false,
+  menu: false, confirm: null, reason: '', stake: 1, answer: null, joker: '', sv: {} };
 let pool = null;
 let lastKey = '', lastQ = null, seenEvent = null, busy = false, lastPoke = 0, rt = null;
 
-const save = () => {
-  try { sessionStorage.setItem('quiz.id', JSON.stringify(ID)); localStorage.setItem('quiz.last', JSON.stringify(ID)); } catch {}
-};
+const save = () => { try { sessionStorage.setItem('quiz.id', JSON.stringify(ID)); localStorage.setItem('quiz.last', JSON.stringify(ID)); } catch {} };
+const saveProfile = () => { try { localStorage.setItem('quiz.profile', JSON.stringify({ nick: ui.nick, avatar: ui.avatar })); } catch {} };
 const loadId = () => { try { return JSON.parse(sessionStorage.getItem('quiz.id')); } catch { return null; } };
 const loadLast = () => { try { return JSON.parse(localStorage.getItem('quiz.last')); } catch { return null; } };
 function leave() {
-  ID = S = M = null; lastKey = '';
+  ID = S = M = null; lastKey = ''; ui.step = 'home'; ui.menu = false; ui.confirm = null;
   try { sessionStorage.removeItem('quiz.id'); localStorage.removeItem('quiz.last'); } catch {}
   if (rt) { rt.close(); rt = null; }
   history.replaceState(null, '', location.pathname);
@@ -128,18 +276,15 @@ const isTV = () => ID && ID.role === 'tv';
 const isAdmin = () => ID && !!ID.adminToken;
 const me = () => S && ID && S.players.find(p => p.id === ID.playerId);
 const joinUrl = () => `${location.origin}${location.pathname}?code=${S ? S.code : ID.code}`;
+const pl = id => (S && S.players.find(p => p.id === id)) || null;
 
 function toast(msg, err) {
   const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block';
-  clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = 'none'), err ? 4500 : 3000);
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.style.display = 'none'), err ? 4500 : 3200);
 }
-async function act(fn, args, after) {
-  try {
-    const r = await fn(args);
-    if (after) after(r);
-    await refresh(true);
-    return r;
-  } catch (e) { toast(errText(e), true); await refresh(true).catch(() => {}); }
+async function act(fn, after) {
+  try { const r = await fn(); if (after) after(r); await refresh(true); return r; }
+  catch (e) { toast(errText(e), true); await refresh(true).catch(() => {}); }
 }
 
 /* ---------- Laden / Synchronisieren ---------- */
@@ -154,7 +299,7 @@ async function refresh(force) {
     offset = Date.parse(s.server_now) - Date.now();
     S = s; M = m;
     if (S.status === 'question_active' && S.question && lastQ !== S.question.sq_id) {
-      lastQ = S.question.sq_id; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = '';
+      lastQ = S.question.sq_id; ui.answer = null; ui.joker = ''; ui.confirm = null; ui.reason = ''; ui.menu = false;
       ui.stake = Math.min(1, M ? M.points : 0);
     }
     handleEvent();
@@ -169,7 +314,7 @@ function handleEvent() {
   if (seenEvent === null) { seenEvent = ev.at; return; }
   if (ev.at === seenEvent) return;
   seenEvent = ev.at;
-  const txt = { skipped: 'Der Admin hat die Frage übersprungen – keine Punkte, keine Joker verbraucht.',
+  const txt = { skipped: 'Der Admin hat die Frage übersprungen – keine Punkte, kein Joker verbraucht.',
     blocked: 'Der Admin hat die Frage dauerhaft gesperrt und übersprungen.',
     blocked_after_reveal: 'Der Admin hat die vorige Frage dauerhaft gesperrt.',
     ended: 'Der Admin hat das Spiel beendet.' }[ev.type];
@@ -181,9 +326,7 @@ function handleEvent() {
 function connectRealtime() {
   if (CFG.dev || !ID || rt) return;
   let ws, ref = 0, hb;
-  try {
-    ws = new WebSocket(`${CFG.url.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${encodeURIComponent(CFG.key)}&vsn=1.0.0`);
-  } catch { return; }
+  try { ws = new WebSocket(`${CFG.url.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${encodeURIComponent(CFG.key)}&vsn=1.0.0`); } catch { return; }
   rt = { ws, ok: false, close() { clearInterval(hb); try { ws.close(); } catch {} } };
   const send = (topic, event, payload) => ws.send(JSON.stringify({ topic, event, payload, ref: String(++ref) }));
   ws.onopen = () => {
@@ -198,69 +341,97 @@ function connectRealtime() {
     if (m.event === 'phx_reply' && m.payload && m.payload.status === 'ok' && m.topic.startsWith('realtime:')) rt.ok = true;
     if (m.event === 'postgres_changes') refresh(true);
   };
-  ws.onclose = () => { clearInterval(hb); rt = null; setTimeout(connectRealtime, 3000); };
+  ws.onclose = () => { clearInterval(hb); rt = null; if (ID) setTimeout(connectRealtime, 3000); };
   ws.onerror = () => {};
 }
 
 /* Takt: Countdown anzeigen, abgelaufene Fristen beim Server anstoßen, Polling */
+const mmss = sec => { sec = Math.max(0, Math.ceil(sec)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); };
 setInterval(() => {
-  const t = $('#timer');
   if (!S) return;
+  const t = $('#tt'), box = $('#timer');
   const now = Date.now() + offset;
   if (S.status === 'question_active' && S.deadline) {
     const left = (Date.parse(S.deadline) - now) / 1000;
-    if (t) { t.textContent = Math.max(0, Math.ceil(left)) + ' s'; t.classList.toggle('low', left <= 10); }
+    if (t) t.textContent = mmss(left);
+    if (box) box.classList.toggle('low', left <= 10 && left > 0);
     if (left < -(S.settings.grace_ms / 1000) - 0.3 && Date.now() - lastPoke > 1000) { lastPoke = Date.now(); refresh(true); }
   } else if (S.status === 'reveal' && S.ready_deadline) {
     const left = (Date.parse(S.ready_deadline) - now) / 1000;
-    if (t) t.textContent = Math.max(0, Math.ceil(left)) + ' s';
+    if (t) t.textContent = mmss(left);
     if (left < -0.3 && Date.now() - lastPoke > 1000) { lastPoke = Date.now(); refresh(true); }
   }
 }, 250);
 setInterval(() => { if (ID) refresh(); }, 1500);
 
-/* ---------- Aktionen ---------- */
+/* ---------- Einstieg: erstellen / beitreten ---------- */
+const go = step => { ui.step = step; render(true); window.scrollTo(0, 0); };
+const val = id => { const e = $('#' + id); return e ? e.value : ''; };
 const settingsFromForm = () => {
-  const v = id => { const e = $('#' + id); return e && e.value !== '' ? Number(e.value) : undefined; };
+  const v = id => ui.sv[id] !== undefined && ui.sv[id] !== '' ? Number(ui.sv[id]) : undefined;
   const s = { question_count: v('s_count'), answer_seconds: v('s_secs'), start_points: v('s_pts'),
     max_jokers_per_question: v('s_jpq'), han_solo_min_players: v('s_hsmin'), ready_timeout_seconds: v('s_rt'),
-    difficulty_order: $('#s_order') ? $('#s_order').value : undefined };
-  Object.keys(s).forEach(k => s[k] === undefined && delete s[k]);
+    difficulty_order: ui.sv.s_order === 'random' ? 'random' : undefined };
+  Object.keys(s).forEach(k => (s[k] === undefined || Number.isNaN(s[k])) && delete s[k]);
   return s;
 };
-async function createGame(mode) {
-  const nick = ($('#nick') || {}).value || '';
-  const plays = mode === 'phone' ? true : false;
-  if (plays && !nick.trim()) return toast('Bitte einen Namen eingeben.', true);
+let pendingSettings = {};
+async function joinNext() {          // Schritt 1 Beitreten: Code prüfen, vergebene Avatare laden
+  const code = val('code').trim().toUpperCase();
+  if (code.length < 5) return toast('Bitte den 5-stelligen Code eingeben.', true);
   try {
-    const r = await rpc('quiz_create_session', { p_mode: mode, p_nickname: plays ? nick : null,
-      p_admin_plays: plays, p_settings: settingsFromForm() });
-    ID = { sid: r.session_id, code: r.code, role: mode === 'tv' ? 'tv' : 'player',
-      playerToken: r.player_token, playerId: r.player_id, adminToken: r.admin_token };
-    save(); startSync();
-    if (mode === 'tv') document.body.classList.add('tv');
-    history.replaceState(null, '', location.pathname);
+    const s = await rpc('quiz_state_by_code', { p_code: code });
+    if (s.status === 'finished') throw new Error('session_finished');
+    ui.code = code; ui.taken = s.players.map(p => p.avatar).filter(Boolean); ui.mode = 'join';
+    if (ui.taken.includes(ui.avatar)) ui.avatar = 0;
+    go('profile');
   } catch (e) { toast(errText(e), true); }
 }
-async function joinGame() {
-  const code = ($('#code').value || '').trim().toUpperCase(), nick = ($('#jnick').value || '').trim();
-  if (!code) return toast('Bitte den Code eingeben.', true);
+function createNext(mode) {           // Schritt 1 Erstellen: Einstellungen merken
+  pendingSettings = settingsFromForm();
+  ui.mode = mode; ui.taken = [];
+  if (mode === 'tv') return createGame('tv');
+  go('profile');
+}
+async function submitProfile() {
+  ui.nick = val('nick').trim();
+  if (!ui.nick) return toast('Bitte gib deinen Namen ein.', true);
+  if (!ui.avatar) return toast('Bitte wähle einen Avatar.', true);
+  saveProfile();
+  if (ui.mode === 'join') return joinGame();
+  return createGame('phone');
+}
+async function createGame(mode) {
   try {
-    const r = await rpc('quiz_join', { p_code: code, p_nickname: nick });
-    ID = { sid: r.session_id, code: r.code, role: 'player', playerToken: r.player_token, playerId: r.player_id };
+    const r = await rpc('quiz_create_session', { p_mode: mode, p_nickname: mode === 'phone' ? ui.nick : null,
+      p_admin_plays: mode === 'phone', p_settings: pendingSettings, p_avatar: mode === 'phone' ? ui.avatar : null });
+    ID = { sid: r.session_id, code: r.code, role: mode === 'tv' ? 'tv' : 'player',
+      playerToken: r.player_token, playerId: r.player_id, adminToken: r.admin_token };
     save(); startSync(); history.replaceState(null, '', location.pathname);
   } catch (e) { toast(errText(e), true); }
 }
-async function watchTV() {   // nur zuschauen (ohne Spielerrolle), z. B. zweiter Bildschirm
-  const code = ($('#code').value || '').trim().toUpperCase();
-  if (!code) return toast('Bitte den Code eingeben.', true);
+async function joinGame() {
+  try {
+    const r = await rpc('quiz_join', { p_code: ui.code, p_nickname: ui.nick, p_avatar: ui.avatar });
+    ID = { sid: r.session_id, code: r.code, role: 'player', playerToken: r.player_token, playerId: r.player_id };
+    save(); startSync(); history.replaceState(null, '', location.pathname);
+  } catch (e) {
+    toast(errText(e), true);
+    if (e.message === 'avatar_taken') { try { const s = await rpc('quiz_state_by_code', { p_code: ui.code }); ui.taken = s.players.map(p => p.avatar).filter(Boolean); ui.avatar = 0; render(true); } catch {} }
+  }
+}
+async function watchTV() {            // nur zuschauen (ohne Spielerrolle), z. B. zweiter Bildschirm
+  const code = val('code').trim().toUpperCase();
+  if (code.length < 5) return toast('Bitte den 5-stelligen Code eingeben.', true);
   try {
     const s = await rpc('quiz_state_by_code', { p_code: code });
-    ID = { sid: s.id, code: s.code, role: 'tv' }; save(); startSync(); document.body.classList.add('tv');
+    ID = { sid: s.id, code: s.code, role: 'tv' }; save(); startSync();
   } catch (e) { toast(errText(e), true); }
 }
+function resume() { const l = loadLast(); if (l) { ID = l; save(); startSync(); } }
 function startSync() { lastKey = ''; seenEvent = null; lastQ = null; connectRealtime(); refresh(true); }
 
+/* ---------- Aktionen im Spiel ---------- */
 const A = {
   ready: on => act(() => rpc('quiz_set_ready', { p_player_token: ID.playerToken, p_ready: on })),
   start: () => act(() => rpc('quiz_start', { p_admin_token: ID.adminToken })),
@@ -270,255 +441,283 @@ const A = {
     act(() => rpc('quiz_submit', { p_player_token: ID.playerToken, p_sq_id: S.question.sq_id,
       p_answer: ui.answer, p_stake: ui.stake, p_joker: ui.joker || null }));
   },
-  skip: () => act(() => rpc('quiz_admin_skip', { p_admin_token: ID.adminToken })),
-  next: () => act(() => rpc('quiz_admin_next', { p_admin_token: ID.adminToken })),
-  end: () => { ui.confirm = null; act(() => rpc('quiz_admin_end', { p_admin_token: ID.adminToken })); },
+  skip: () => { ui.menu = false; act(() => rpc('quiz_admin_skip', { p_admin_token: ID.adminToken })); },
+  next: () => { ui.menu = false; act(() => rpc('quiz_admin_next', { p_admin_token: ID.adminToken })); },
+  end: () => { ui.menu = false; ui.confirm = null; act(() => rpc('quiz_admin_end', { p_admin_token: ID.adminToken })); },
   kick: id => act(() => rpc('quiz_admin_kick', { p_admin_token: ID.adminToken, p_player_id: id })),
   block: () => {
-    const reason = ($('#reason') || {}).value || '';
-    ui.confirm = null;
+    const reason = val('reason'); ui.menu = false; ui.confirm = null;
     act(() => rpc('quiz_admin_block', { p_admin_token: ID.adminToken, p_question_id: S.question.question_id, p_reason: reason }));
   },
 };
+const setMenu = on => { ui.menu = on; ui.confirm = null; render(true); };
 const setConfirm = c => { ui.confirm = c; render(true); };
-const pick = l => { ui.answer = l; document.querySelectorAll('.ans').forEach(b => b.classList.toggle('sel', b.dataset.l === l)); };
+const pick = l => { ui.answer = l; document.querySelectorAll('.ans[data-l]').forEach(b => b.classList.toggle('sel', b.dataset.l === l)); };
 const setStake = v => {
   const max = M ? M.points : 0;
   ui.stake = Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
-  if (ui.stake === 0 && ui.joker === 'safety_net') ui.joker = '';
+  if (ui.stake === 0 && ui.joker === 'safety_net') { ui.joker = ''; document.querySelectorAll('[data-jk]').forEach(b => b.classList.remove('on')); }
   $('#stakeVal').textContent = ui.stake; $('#stakeRange').value = ui.stake;
-  document.querySelectorAll('[data-jk=safety_net]').forEach(e => (e.disabled = ui.stake === 0));
+  document.querySelectorAll('[data-jk=safety_net]').forEach(e => (e.disabled = ui.stake === 0 && ui.joker !== 'safety_net'));
+  document.querySelectorAll('[data-chip]').forEach(c => c.classList.toggle('on', Number(c.dataset.chip) === ui.stake));
 };
-const setJoker = j => { ui.joker = ui.joker === j ? '' : j; document.querySelectorAll('[data-jk]').forEach(b => b.classList.toggle('primary', b.dataset.jk === ui.joker)); };
+const setJoker = j => { ui.joker = ui.joker === j ? '' : j; document.querySelectorAll('[data-jk]').forEach(b => b.classList.toggle('on', b.dataset.jk === ui.joker)); };
+function selAvatar(n) {
+  if (ui.taken.includes(n)) return toast('Dieser Avatar ist schon vergeben.', true);
+  ui.avatar = n; ui.nick = val('nick');
+  document.querySelectorAll('.pick').forEach(b => b.classList.toggle('on', Number(b.dataset.n) === n));
+  const big = $('#bigav'); if (big) big.innerHTML = `<img src="${avSrc(n)}" alt="">`;
+}
+
+/* ---------- Bausteine ---------- */
+const avSrc = n => `avatars/a${String(n).padStart(2, '0')}.jpg`;
+const av = (n, s = 44, extra = '') => `<span class="av" style="--s:${s}px">${n ? `<img src="${avSrc(n)}" alt="" draggable="false">` : ''}${extra}</span>`;
+const avFull = n => `<div class="avfull">${n ? `<img src="${avSrc(n)}" alt="">` : ''}</div>`;
+const CHECK = '<svg class="chk" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="11" fill="#17484d"/><path d="M6 11.5l3.2 3.2L16 7.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const dots = '<svg width="22" height="6" viewBox="0 0 22 6" fill="#fff"><circle cx="3" cy="3" r="2.6"/><circle cx="11" cy="3" r="2.6"/><circle cx="19" cy="3" r="2.6"/></svg>';
+const sgn = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+
+function qrSvg(text) {
+  try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ scalable: true, margin: 0 }); }
+  catch { return '<p class="hint">QR-Code nicht verfügbar – bitte Link oder Code verwenden.</p>'; }
+}
+const topbar = (mid, left) => `<div class="topbar">
+  ${left || '<button class="iconbtn ghost">‹</button>'}<div class="mid">${mid || ''}</div>
+  ${isAdmin() && S && S.status !== 'finished' ? `<button class="iconbtn" aria-label="Admin-Menü" onclick="setMenu(true)">${dots}</button>` : '<button class="iconbtn ghost">⋯</button>'}</div>`;
+const progressBar = () => {
+  const total = S.progress.total;
+  const cur = S.status === 'question_active' ? S.progress.current : S.progress.done;
+  return `<div class="progress"><div class="lbl">${cur} <span>von ${total}</span></div>
+    <div class="segs">${Array.from({ length: total }, (_, i) => `<i class="${i < cur ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="left">${Math.max(0, total - cur)} ${total - cur === 1 ? 'Frage' : 'Fragen'} übrig</div></div>`;
+};
 
 /* ---------- Ansichten ---------- */
-function qrSvg(text) {
-  try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return q.createSvgTag({ scalable: true, margin: 1 }); }
-  catch { return '<p class="muted">QR-Code nicht verfügbar – bitte Link oder Code verwenden.</p>'; }
-}
-const playersTable = (withReady) => `<table><tbody>${S.players.map(p => `
-  <tr class="${ID && p.id === ID.playerId ? 'me' : ''}"><td>${esc(p.nickname)}${p.is_admin ? ' <span class="pill">Admin</span>' : ''}${ID && p.id === ID.playerId ? ' (du)' : ''}</td>
-  <td>${withReady ? (p.is_ready ? '✅ bereit' : '⏳ wartet') : ''}</td>
-  <td class="num">${isAdmin() && !p.is_admin && S.status === 'lobby' ? `<button onclick="A.kick('${p.id}')">entfernen</button>` : ''}</td></tr>`).join('')}</tbody></table>`;
-
-function rankingTable() {
-  return `<table><thead><tr><th class="num">#</th><th>Spieler</th><th class="num">Punkte</th></tr></thead><tbody>${S.players.map(p => `
-    <tr class="${ID && p.id === ID.playerId ? 'me' : ''}"><td class="num">${p.rank}</td><td>${esc(p.nickname)}${ID && p.id === ID.playerId ? ' (du)' : ''}${p.points === 0 ? ' <span class="pill">0 Punkte</span>' : ''}</td><td class="num">${p.points}</td></tr>`).join('')}</tbody></table>`;
-}
-
 function homeView() {
   const last = loadLast();
   const urlCode = new URLSearchParams(location.search).get('code') || '';
-  const poolTxt = pool ? `${pool.active} aktive Fragen (leicht ${pool.by_difficulty['1']} · mittel ${pool.by_difficulty['2']} · schwer ${pool.by_difficulty['3']}), ${pool.blocked} gesperrt` : '…';
-  const st = (id, label, val, extra = '') => `<label>${label}</label><input id="${id}" type="number" ${extra} placeholder="${val}">`;
-  return `<h1>Quiz</h1><p class="muted">Fragenpool: ${poolTxt}</p>
-  ${last && last.sid ? `<div class="card"><b>Laufende Runde ${esc(last.code)}</b><div class="row" style="margin-top:6px">
-     <button class="primary" onclick="resume()">Fortsetzen</button><button class="fit" onclick="leave()">Vergessen</button></div></div>` : ''}
-  <div class="card"><h2>Beitreten</h2>
-    <label>Code</label><input id="code" value="${esc(urlCode)}" maxlength="5" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase">
-    <label>Dein Name</label><input id="jnick" maxlength="20" autocomplete="off">
-    <div class="row" style="margin-top:10px"><button class="primary" onclick="joinGame()">Beitreten</button>
-    <button onclick="watchTV()" title="Nur zuschauen, ohne mitzuspielen">Nur zuschauen (TV)</button></div></div>
-  <div class="card"><h2>Neue Runde</h2>
-    <details ${ui.settingsOpen ? 'open' : ''} ontoggle="ui.settingsOpen=this.open"><summary>Einstellungen (optional)</summary>
-      ${st('s_count', 'Fragen pro Runde', 10, 'min=1 max=50')}${st('s_secs', 'Sekunden pro Frage', 45, 'min=10 max=120')}
-      ${st('s_pts', 'Startpunkte', 10, 'min=1 max=1000')}${st('s_jpq', 'Max. Joker pro Frage', 1, 'min=1 max=4')}
-      ${st('s_hsmin', 'Han Solo ab Spielerzahl', 3, 'min=2')}${st('s_rt', 'Weiter-Timeout in Sekunden (leer = aus)', '', 'min=5')}
-      <label>Reihenfolge</label><select id="s_order"><option value="ascending">Schwierigkeit steigt</option><option value="random">zufällig</option></select>
-    </details>
-    <label>Dein Name (für „Handy“)</label><input id="nick" maxlength="20" autocomplete="off" placeholder="Name als Admin &amp; Spieler">
-    <div class="row" style="margin-top:10px">
-      <button class="primary" onclick="createGame('phone')">Handy-Modus</button>
-      <button onclick="createGame('tv')">TV-Modus</button></div>
-    <p class="muted">Handy: Du bist Admin und spielst mit. TV: Dieses Gerät zeigt das Spiel; mitspielen kannst du zusätzlich mit dem Handy.</p>
-  </div>`;
+  if (urlCode && ui.step === 'home' && !ui.code) { ui.code = urlCode.toUpperCase(); ui.step = 'join'; }
+  const st = (id, label, ph, extra = '') => `<div><label class="f">${label}</label><input class="t" id="${id}" type="number" inputmode="numeric" placeholder="${ph}" value="${esc(ui.sv[id] ?? '')}" oninput="ui.sv[this.id]=this.value" ${extra}></div>`;
+  const back = to => `<button class="iconbtn" onclick="go('${to}')">‹</button>`;
+  if (ui.step === 'join') return `<div class="screen"><div class="hero">${topbar('Beitreten', back('home'))}
+      <h1 class="q" style="margin-top:22px">Wie lautet der Code?</h1><p class="sub">Du findest ihn in der Lobby oder auf dem Fernseher.</p></div>
+    <div class="sheet"><div><label class="f">Spielcode</label><input class="t code" id="code" maxlength="5" autocomplete="off" autocapitalize="characters" value="${esc(ui.code)}" placeholder="· · · · ·" onkeydown="if(event.key==='Enter')joinNext()"></div>
+      <button class="link" onclick="watchTV()">Nur zuschauen (TV-Ansicht)</button><div class="grow"></div>
+      <div class="actions"><button class="btn" onclick="joinNext()">Weiter</button></div></div></div>`;
+  if (ui.step === 'create') return `<div class="screen"><div class="hero">${topbar('Neue Runde', back('home'))}
+      <h1 class="q" style="margin-top:22px">Wo soll gespielt werden?</h1></div>
+    <div class="sheet">
+      <div class="seg2"><button class="${ui.mode === 'tv' ? '' : 'on'}" onclick="ui.mode='phone';render(true)">📱 Handy<small>Du spielst mit</small></button>
+        <button class="${ui.mode === 'tv' ? 'on' : ''}" onclick="ui.mode='tv';render(true)">📺 TV<small>Du moderierst</small></button></div>
+      <details class="set" ${ui.settingsOpen ? 'open' : ''} ontoggle="ui.settingsOpen=this.open"><summary>Einstellungen</summary><div class="grid2">
+        ${st('s_count', 'Fragen', '10', 'min=1 max=50')}${st('s_secs', 'Sekunden', '45', 'min=10 max=120')}
+        ${st('s_pts', 'Startpunkte', '10', 'min=1 max=1000')}${st('s_jpq', 'Joker / Frage', '1', 'min=1 max=4')}
+        ${st('s_hsmin', 'Han Solo ab', '3', 'min=2')}${st('s_rt', 'Weiter-Timeout s', 'aus', 'min=5')}
+        <div style="grid-column:1/-1"><label class="f">Reihenfolge</label><select class="t" id="s_order" onchange="ui.sv.s_order=this.value"><option value="ascending">Schwierigkeit steigt</option><option value="random" ${ui.sv.s_order === 'random' ? 'selected' : ''}>Zufällig</option></select></div></div></details>
+      <div class="grow"></div>
+      <div class="actions"><button class="btn" onclick="createNext('${ui.mode === 'tv' ? 'tv' : 'phone'}')">${ui.mode === 'tv' ? 'TV-Runde starten' : 'Weiter'}</button></div></div></div>`;
+  if (ui.step === 'profile') {
+    const joining = ui.mode === 'join';
+    return `<div class="screen"><div class="hero">${topbar(joining ? 'Runde ' + esc(ui.code) : 'Neue Runde', back(joining ? 'join' : 'create'))}
+      <h1 class="q" style="margin-top:18px">Wer bist du?</h1><p class="sub">Name eintragen und einen Avatar wählen.</p></div>
+    <div class="sheet">
+      <div class="hero-av"><div class="avfull" id="bigav">${ui.avatar ? `<img src="${avSrc(ui.avatar)}" alt="">` : '<div style="position:absolute;inset:0;display:grid;place-items:center;color:#7d8f90;font-size:14px;text-align:center;padding:12px">Wähle unten<br>einen Avatar</div>'}</div></div>
+      <div><label class="f">Dein Name</label><input class="t" id="nick" maxlength="20" autocomplete="off" value="${esc(ui.nick)}" oninput="ui.nick=this.value" placeholder="z. B. Tom"></div>
+      <div><label class="f">Avatar</label><div class="picker">${Array.from({ length: AVATARS }, (_, i) => i + 1).map(n => `
+        <button class="pick ${ui.avatar === n ? 'on' : ''} ${ui.taken.includes(n) ? 'taken' : ''}" data-n="${n}" onclick="selAvatar(${n})" aria-label="Avatar ${n}">${av(n, 64)}</button>`).join('')}</div></div>
+      <div class="grow"></div>
+      <div class="actions"><button class="btn" onclick="submitProfile()">${joining ? 'Beitreten' : 'Runde erstellen'}</button></div></div></div>`;
+  }
+  const poolTxt = pool ? `${pool.active} Fragen im Pool` : '';
+  return `<div class="screen"><div class="hero" style="padding-bottom:50px"><div class="topbar"><span></span><span class="mid"></span><span></span></div>
+      <h1 class="q" style="font-size:58px;margin-top:30px">${APP_NAME}</h1><p class="sub" style="font-size:17px;margin-top:10px">Einsätze, Joker, Freunde.<br>${poolTxt}</p></div>
+    <div class="sheet">
+      ${last && last.sid ? `<div class="note"><b>Laufende Runde ${esc(last.code)}</b><div style="display:flex;gap:10px;margin-top:10px"><button class="btn small" onclick="resume()">Fortsetzen</button><button class="btn small ghost" onclick="leave()">Vergessen</button></div></div>` : ''}
+      <button class="btn" onclick="go('join')">Spiel beitreten</button>
+      <button class="btn ghost" onclick="ui.mode='phone';go('create')">Neue Runde erstellen</button><div class="grow"></div></div></div>`;
 }
-function adminBox() {
-  if (!isAdmin()) return '';
+
+function menuView() {
+  if (!ui.menu || !isAdmin() || !S) return '';
   const st = S.status;
-  let btns = '', panels = '';
-  if (st === 'lobby') {
-    const need = S.settings.min_players;
-    btns += `<button class="primary" onclick="A.start()" ${S.players.length < need ? 'disabled' : ''}>Spiel starten</button>`;
-    if (S.players.length < need) panels += `<p class="muted">Mindestens ${need} Spieler nötig.</p>`;
+  let h = '';
+  if (ui.confirm === 'block') h = `<h2>Frage dauerhaft sperren?</h2><p class="hint" style="margin:0">Sie erscheint nie wieder in einer Runde. Läuft sie gerade, wird sie ohne Wertung übersprungen.</p>
+      <input class="t" id="reason" placeholder="Grund (optional)" value="${esc(ui.reason)}" oninput="ui.reason=this.value">
+      <button class="btn danger" onclick="A.block()">Ja, dauerhaft sperren</button><button class="btn ghost" onclick="setConfirm(null)">Abbrechen</button>`;
+  else if (ui.confirm === 'end') h = `<h2>Spiel für alle beenden?</h2><button class="btn danger" onclick="A.end()">Ja, beenden</button><button class="btn ghost" onclick="setConfirm(null)">Abbrechen</button>`;
+  else {
+    h = '<h2>Admin</h2>';
+    if (st === 'question_active') h += `<button class="btn ghost" onclick="A.skip()">Frage überspringen</button>`;
+    if (st === 'reveal') h += `<button class="btn ghost" onclick="A.next()">Weiter erzwingen</button>`;
+    if (S.question && (st === 'question_active' || st === 'reveal')) h += `<button class="btn danger" onclick="setConfirm('block')">Frage dauerhaft sperren</button>`;
+    h += `<button class="btn danger" onclick="setConfirm('end')">Spiel beenden</button><button class="btn soft" onclick="setMenu(false)">Schließen</button>`;
   }
-  if (st === 'question_active') btns += `<button onclick="A.skip()">Frage überspringen</button>`;
-  if (st === 'reveal') btns += `<button onclick="A.next()">Weiter erzwingen</button>`;
-  if (S.question && (st === 'question_active' || st === 'reveal')) {
-    if (ui.confirm === 'block') panels += `<div class="card"><b>Diese Frage dauerhaft sperren?</b>
-      <p class="muted">Sie erscheint nie wieder in einer Runde. Läuft sie gerade, wird sie ohne Wertung übersprungen.</p>
-      <input id="reason" placeholder="Grund (optional)" value="${esc(ui.reason)}" oninput="ui.reason=this.value">
-      <div class="row" style="margin-top:8px"><button class="danger" onclick="A.block()">Ja, dauerhaft sperren</button><button onclick="setConfirm(null)">Abbrechen</button></div></div>`;
-    else btns += `<button class="danger" onclick="setConfirm('block')">Frage dauerhaft sperren</button>`;
-  }
-  if (st !== 'finished') {
-    if (ui.confirm === 'end') panels += `<div class="card"><b>Spiel für alle beenden?</b>
-      <div class="row" style="margin-top:8px"><button class="danger" onclick="A.end()">Ja, beenden</button><button onclick="setConfirm(null)">Abbrechen</button></div></div>`;
-    else btns += `<button onclick="setConfirm('end')">Spiel beenden</button>`;
-  }
-  return `<div class="card admin"><b>Admin</b><div class="row" style="margin-top:8px">${btns}</div>${panels}</div>`;
+  return `<div class="scrim" onclick="if(event.target===this)setMenu(false)"><div class="menu">${h}</div></div>`;
 }
 
 function lobbyView() {
-  const share = `<div class="card" style="text-align:center"><div class="muted">Code</div><div class="code">${esc(S.code)}</div>
-    <div class="qr">${qrSvg(joinUrl())}</div>
-    <div class="muted" style="word-break:break-all">${esc(joinUrl())}</div></div>`;
-  const cfg = S.settings;
-  const info = `<p class="muted">${cfg.question_count} Fragen · ${cfg.answer_seconds} s · ${cfg.start_points} Startpunkte · Joker pro Frage max. ${cfg.max_jokers_per_question}</p>`;
-  if (isTV()) return `<h1>Quiz – Lobby</h1><div class="tvgrid"><div>${share}</div><div><h2>${S.players.length} Spieler</h2>${playersTable(false)}${info}${adminBox()}</div></div>`;
-  const m = me();
-  return `<h1>Lobby</h1>${share}<h2>${S.players.length} Spieler</h2>${playersTable(true)}${info}
-    <div class="row"><button class="${m && m.is_ready ? '' : 'primary'}" onclick="A.ready(${m && m.is_ready ? 'false' : 'true'})">${m && m.is_ready ? 'Doch nicht bereit' : 'Bereit'}</button></div>
-    ${adminBox()}${isAdmin() ? '' : '<p class="muted">Warte, bis der Admin das Spiel startet …</p>'}`;
+  const cfg = S.settings, m = me(), tv = isTV();
+  const tiles = S.players.map(p => `<div class="tile">${av(p.avatar, 72)}
+      <div class="nm">${esc(p.nickname)}${ID && p.id === ID.playerId ? ' (du)' : ''}</div>
+      <div class="st ${p.is_ready ? 'ready' : ''}">${p.is_admin ? 'Admin' : p.is_ready ? '✓ bereit' : 'wartet …'}</div>
+      ${isAdmin() && !p.is_admin ? `<button class="x" aria-label="entfernen" onclick="A.kick('${p.id}')">×</button>` : ''}</div>`).join('');
+  const share = `<div class="qr">${qrSvg(joinUrl())}<div class="url">${esc(joinUrl())}</div></div>`;
+  const chips = `<div class="chips"><span class="chip">${cfg.question_count} Fragen</span><span class="chip">${cfg.answer_seconds} s</span><span class="chip">${cfg.start_points} Startpunkte</span><span class="chip">Joker: ${cfg.max_jokers_per_question}/Frage</span></div>`;
+  const need = cfg.min_players;
+  const action = isAdmin()
+    ? `<button class="btn" onclick="A.start()" ${S.players.length < need ? 'disabled' : ''}>Spiel starten</button>${S.players.length < need ? `<div class="hint" style="text-align:center">Mindestens ${need} Spieler nötig</div>` : ''}`
+    : tv ? '<div class="hint" style="text-align:center;width:100%">Warte auf den Start …</div>'
+    : `<button class="btn ${m && m.is_ready ? 'ghost' : ''}" onclick="A.ready(${m && m.is_ready ? 'false' : 'true'})">${m && m.is_ready ? 'Doch nicht bereit' : 'Ich bin bereit'}</button>`;
+  const hero = `<div class="hero">${topbar('Lobby')}<div class="sub" style="margin-top:18px">Spielcode</div><div class="big">${esc(S.code)}</div></div>`;
+  if (tv) return `<div class="screen">${hero}<div class="sheet"><div class="twocol"><div>${share}</div><div><h3 class="f" style="margin-top:0">${S.players.length} Spieler</h3><div class="tiles">${tiles}</div><div style="margin-top:20px">${chips}</div></div></div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${share}<div><h3 class="f">${S.players.length} Spieler</h3><div class="tiles">${tiles}</div></div>${chips}<div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
 }
 
-const header = () => `<div class="bar"><span>Frage ${S.progress.current} / ${S.progress.total}</span><span id="timer">–</span>
-  ${isTV() ? '' : `<span>${M ? M.points : 0} Punkte</span>`}</div>`;
-const answeredLine = () => {
-  const req = S.players.filter(p => p.required), done = req.filter(p => p.answered);
-  return `<span id="answered">${done.length} / ${req.length}</span>`;
-};
-
-function answerList(mode) {   // mode: 'pick' | 'locked' | 'reveal'
-  const removed = (M && M.jokers_this_question && M.jokers_this_question.fifty_fifty) ? M.jokers_this_question.fifty_fifty.removed : [];
+const ownResult = () => S.reveal && ID && S.reveal.results.find(r => r.player_id === ID.playerId);
+function answerList(mode) {   // 'pick' | 'locked' | 'reveal'
+  const used = (M && M.jokers_this_question) || {};
+  const removed = used.fifty_fifty ? used.fifty_fifty.removed : [];
+  const gm = used.group_opinion;
   const sub = M && M.submission;
+  const mine = mode === 'reveal' ? ownResult() : null;
   return `<div class="answers">${['A', 'B', 'C', 'D'].map(l => {
-    let cls = 'ans', dis = '';
-    const text = S.question.answers[l];
-    if (mode === 'pick') { if (removed.includes(l)) { cls += ' gone'; dis = 'disabled'; } if (ui.answer === l) cls += ' sel'; }
-    if (mode === 'locked') { dis = 'disabled'; if (sub && sub.answer === l) cls += ' sel'; }
+    let cls = 'ans', dis = mode === 'pick' ? '' : 'disabled', badge = '';
+    if (mode === 'pick') { if (removed.includes(l)) { cls += ' gone'; dis = 'disabled'; } if (ui.answer === l) cls += ' sel'; if (gm) badge = `<span class="cnt">${gm[l]}×</span>`; }
+    if (mode === 'locked') { if (sub && sub.answer === l) cls += ' sel'; if (removed.includes(l)) cls += ' gone'; }
     if (mode === 'reveal') {
-      dis = 'disabled';
       if (l === S.reveal.correct_answer) cls += ' right';
-      else if (sub && sub.answer === l || (!sub && ownResult() && ownResult().answer === l)) cls += ' wrong';
+      else if (mine && mine.answer === l) cls += ' wrong';
+      badge = `<span class="cnt">${S.reveal.distribution[l]}×</span>`;
     }
-    const cnt = mode === 'reveal' ? ` <span class="pill">${S.reveal.distribution[l]}×</span>` : '';
-    return `<button class="${cls}" data-l="${l}" ${dis} onclick="pick('${l}')"><b>${l}</b><span>${esc(text)}${cnt}</span></button>`;
+    return `<button class="${cls}" data-l="${l}" ${dis} onclick="pick('${l}')"><b>${l}.</b><span>${esc(S.question.answers[l])}</span>${badge}${CHECK}</button>`;
   }).join('')}</div>`;
 }
-const ownResult = () => S.reveal && ID && S.reveal.results.find(r => r.player_id === ID.playerId);
 
-function jokerPanel() {
+function jokerBox() {
   const left = M.jokers_left || {}, used = M.jokers_this_question || {};
   const maxQ = S.settings.max_jokers_per_question;
   const usedCount = Object.keys(used).length + (ui.joker ? 1 : 0);
+  const inst = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || !!used[key] || usedCount >= maxQ;
+    return `<button class="jk ${used[key] ? 'on' : ''}" ${dis ? 'disabled' : ''} onclick="A.joker('${key}')"><span class="n">${n}</span><i>${icon}</i>${label}</button>`; };
+  const tog = (key, icon, label) => { const n = left[key] || 0; const dis = n < 1 || (usedCount >= maxQ && ui.joker !== key) || (key === 'safety_net' && ui.stake === 0 && ui.joker !== key);
+    return `<button class="jk ${ui.joker === key ? 'on' : ''}" data-jk="${key}" ${dis ? 'disabled' : ''} onclick="setJoker('${key}')"><span class="n">${n}</span><i>${icon}</i>${label}</button>`; };
   const gm = used.group_opinion;
-  const b = (key, label, kind) => {
-    const n = left[key] || 0;
-    const dis = n < 1 || (!used[key] && usedCount >= maxQ && !(ui.joker === key)) || !!used[key];
-    if (kind === 'instant') return `<button ${dis ? 'disabled' : ''} onclick="A.joker('${key}')">${label} (${n})</button>`;
-    return `<button data-jk="${key}" class="${ui.joker === key ? 'primary' : ''}" ${n < 1 || (usedCount >= maxQ && ui.joker !== key) || (key === 'safety_net' && ui.stake === 0) ? 'disabled' : ''} onclick="setJoker('${key}')">${label} (${n})</button>`;
-  };
-  return `<div class="card"><b>Joker</b> <span class="muted">(max. ${maxQ} pro Frage)</span>
-    <div class="row" style="margin-top:6px">${b('fifty_fifty', '50:50', 'instant')}${b('group_opinion', 'Gruppenmeinung', 'instant')}</div>
-    <div class="row" style="margin-top:6px">${b('han_solo', 'Han Solo', 'toggle')}${b('safety_net', 'Sicherheitsnetz', 'toggle')}</div>
-    ${gm ? `<p>Gruppenmeinung (bisher ${gm.total} Antworten): A ${gm.A} · B ${gm.B} · C ${gm.C} · D ${gm.D}</p>` : ''}
-    <p class="muted">Han Solo: +${S.settings.han_solo_bonus} Bonus, wenn nur du richtig liegst (ab ${S.settings.han_solo_min_players} Spielern). Sicherheitsnetz: halber Verlust bei falscher Antwort.</p></div>`;
+  return `<div class="box"><h3>Joker <span style="text-transform:none;letter-spacing:0">· max. ${maxQ} pro Frage</span></h3>
+    <div class="jokers">${inst('fifty_fifty', '½', '50:50')}${inst('group_opinion', '👥', 'Gruppe')}${tog('han_solo', '⭐', 'Han Solo')}${tog('safety_net', '🛟', 'Netz')}</div>
+    ${gm ? `<p class="hint" style="margin:10px 0 0">Gruppe (bisher ${gm.total} Antworten): A ${gm.A} · B ${gm.B} · C ${gm.C} · D ${gm.D}</p>` : ''}
+    <p class="hint" style="margin:10px 0 0">Han Solo: +${S.settings.han_solo_bonus}, wenn nur du richtig liegst (ab ${S.settings.han_solo_min_players} Spielern). Netz: halber Verlust.</p></div>`;
 }
+function stakeBox() {
+  const pts = M.points;
+  if (pts === 0) return `<div class="note">Du hast 0 Punkte – du spielst ohne Einsatz weiter mit. Antworten kannst du trotzdem.</div>`;
+  const half = Math.round(pts / 2);
+  const chips = [0, half, pts].filter((v, i, a) => a.indexOf(v) === i);
+  return `<div class="box"><h3>Dein Einsatz</h3>
+    <div class="stake"><button class="round" onclick="setStake(ui.stake-1)" aria-label="weniger">−</button>
+      <div style="text-align:center"><div class="num" id="stakeVal">${ui.stake}</div><div class="of">von ${pts} Punkten</div></div>
+      <button class="round" onclick="setStake(ui.stake+1)" aria-label="mehr">+</button></div>
+    <input id="stakeRange" type="range" min="0" max="${pts}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
+    <div class="chips">${chips.map(v => `<button class="chip ${ui.stake === v ? 'on' : ''}" data-chip="${v}" onclick="setStake(${v})">${v === pts ? 'All-in' : v === 0 ? 'Kein Einsatz' : 'Hälfte'}</button>`).join('')}</div></div>`;
+}
+function answeredStrip() {
+  const req = S.players.filter(p => p.required), s = isTV() ? 64 : 40;
+  return `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${req.map(p => `<span class="avwrap" data-pa="${p.id}">${av(p.avatar, s, p.answered ? '<span class="ok">✓</span>' : '')}</span>`).join('')}</div>`;
+}
+const answeredCount = () => { const req = S.players.filter(p => p.required); return `${req.filter(p => p.answered).length} / ${req.length}`; };
 
 function questionView() {
-  const q = S.question;
-  if (isTV()) {
-    return `${header()}<div class="tvgrid"><div><div class="qtext">${esc(q.text)}</div>${answerList('locked').replace(/ sel/g, '')}</div>
-      <div><h2>Geantwortet ${answeredLine()}</h2><table><tbody>${S.players.map(p => `<tr><td>${esc(p.nickname)}</td><td class="num" data-pa="${p.id}">${p.required ? (p.answered ? '✅' : '…') : '0 Punkte'}</td></tr>`).join('')}</tbody></table>${adminBox()}</div></div>`;
-  }
+  const q = S.question, tv = isTV();
+  const hero = `<div class="hero">${topbar(esc(q.category || ''))}
+    <div class="meta"><span>Frage ${String(S.progress.current).padStart(2, '0')}</span><span class="timer" id="timer"><span id="tt">--:--</span> ⏳</span></div>
+    <h1 class="q">${esc(q.text)}</h1></div>`;
+  if (tv) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}<div class="grow"></div>
+    <div><h3 class="f" style="text-align:center">Geantwortet <span id="answered">${answeredCount()}</span></h3>${answeredStrip()}</div>
+    ${progressBar()}<div class="actions" style="min-height:10px"></div></div>${menuView()}</div>`;
   const sub = M.submission;
-  if (sub) {
-    return `${header()}<div class="qtext">${esc(q.text)}</div>${answerList('locked')}
-      <div class="card">Abgegeben: <b>${sub.answer}</b> · Einsatz <b>${sub.stake}</b>${sub.joker ? ` · ${sub.joker === 'han_solo' ? 'Han Solo' : 'Sicherheitsnetz'}` : ''}
-      <br><span class="muted">Warte auf die anderen: ${answeredLine()}</span></div>${adminBox()}`;
-  }
-  const pts = M.points, locked = pts === 0;
-  return `${header()}<div class="qtext">${esc(q.text)}</div>${answerList('pick')}
-    <div class="card"><b>Einsatz: <span id="stakeVal">${ui.stake}</span></b> <span class="muted">von ${pts}</span>
-      ${locked ? '<p class="muted">Du hast keine Punkte – du spielst ohne Einsatz mit.</p>' : `
-      <input id="stakeRange" type="range" min="0" max="${pts}" step="1" value="${ui.stake}" oninput="setStake(this.value)">
-      <div class="row"><button onclick="setStake(ui.stake-1)">−1</button><button onclick="setStake(ui.stake+1)">+1</button><button onclick="setStake(0)">0</button><button onclick="setStake(${pts})">All-in</button></div>`}
-    </div>${jokerPanel()}
-    <button class="primary" style="width:100%;padding:14px" onclick="A.submit()">Antwort &amp; Einsatz bestätigen</button>
-    <p class="muted">Nach dem Bestätigen kannst du nichts mehr ändern. Geantwortet: ${answeredLine()}</p>${adminBox()}`;
+  if (sub) return `<div class="screen">${hero}<div class="sheet">${answerList('locked')}
+    <div class="note">Abgegeben: <b>${sub.answer}</b> · Einsatz <b>${sub.stake}</b>${sub.joker ? ` · ${sub.joker === 'han_solo' ? 'Han Solo' : 'Sicherheitsnetz'}` : ''}</div>
+    <div><h3 class="f" style="text-align:center">Warte auf die anderen · <span id="answered">${answeredCount()}</span></h3>${answeredStrip()}</div>
+    ${progressBar()}<div class="grow"></div><div class="actions"><button class="btn" disabled>Antwort abgegeben</button></div></div>${menuView()}</div>`;
+  return `<div class="screen">${hero}<div class="sheet">${answerList('pick')}${stakeBox()}${jokerBox()}${progressBar()}<div class="grow"></div>
+    <div class="actions"><button class="btn" onclick="A.submit()">Antwort bestätigen</button></div></div>${menuView()}</div>`;
 }
 
-function resultsTable() {
-  const names = Object.fromEntries(S.players.map(p => [p.id, p.nickname]));
-  const rows = S.reveal.results.slice().sort((a, b) => (b.change ?? 0) - (a.change ?? 0));
-  const jk = { han_solo: 'Han Solo', safety_net: 'Netz' };
-  return `<table><thead><tr><th>Spieler</th><th>Antwort</th><th class="num">Einsatz</th><th class="num">Ergebnis</th></tr></thead><tbody>${rows.map(r => `
-    <tr class="${ID && r.player_id === ID.playerId ? 'me' : ''}"><td>${esc(names[r.player_id] || '?')}</td>
-    <td>${r.answer || (r.timed_out ? 'Zeit' : '–')}${r.joker ? ` <span class="pill">${jk[r.joker]}</span>` : ''}</td><td class="num">${r.stake}</td>
-    <td class="num ${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : ''}">${r.change > 0 ? '+' : ''}${r.change}${r.bonus ? ` (Bonus ${r.bonus})` : ''}</td></tr>`).join('')}</tbody></table>`;
+function rankRows() {
+  const res = Object.fromEntries(S.reveal.results.map(r => [r.player_id, r]));
+  return `<div class="rows">${S.players.map(p => {
+    const r = res[p.id];
+    const sub = r ? (r.timed_out ? 'Zeit abgelaufen' : `${r.answer} · Einsatz ${r.stake}${r.joker ? ' · ' + (r.joker === 'han_solo' ? 'Han Solo' : 'Netz') : ''}`) : '';
+    return `<div class="row ${ID && p.id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar, 48)}
+      <div class="nm">${esc(p.nickname)}${p.points === 0 ? '<span class="zbadge">0 Punkte</span>' : ''}<small>${esc(sub)}</small></div>
+      <div class="pts">${p.points}${r ? `<small class="${r.change > 0 ? 'pos' : r.change < 0 ? 'neg' : 'zero'}">${sgn(r.change)}${r.bonus ? ' ★' : ''}</small>` : ''}</div></div>`;
+  }).join('')}</div>`;
 }
 function revealView() {
-  const q = S.question, rv = S.reveal;
-  const mine = ownResult();
-  const own = mine ? `<div class="card"><b class="${mine.change > 0 ? 'pos' : mine.change < 0 ? 'neg' : ''}">${mine.timed_out ? 'Zeit abgelaufen' : mine.correct ? 'Richtig!' : 'Falsch'} · ${mine.change > 0 ? '+' : ''}${mine.change} Punkte</b>
-    ${mine.bonus ? `<br>inkl. Han-Solo-Bonus ${mine.bonus}` : ''}</div>` : '';
-  const m = me(), required = m && m.required;
+  const q = S.question, rv = S.reveal, tv = isTV();
+  const mine = ownResult(), m = me();
+  const hero = `<div class="hero">${topbar('Auflösung')}
+    <div class="meta"><span>Frage ${String(S.progress.done).padStart(2, '0')}</span>${S.ready_deadline ? '<span class="timer" id="timer"><span id="tt">--:--</span></span>' : '<span></span>'}</div>
+    <h1 class="q" ${tv ? '' : 'style="font-size:24px"'}>${esc(q.text)}</h1></div>`;
+  const banner = mine ? `<div class="banner ${mine.change > 0 ? 'ok' : mine.change < 0 ? 'bad' : 'zero'}">${av(m && m.avatar, 56)}
+    <div><div class="t ${mine.change > 0 ? 'pos' : mine.change < 0 ? 'neg' : ''}">${mine.timed_out ? 'Zeit abgelaufen' : mine.correct ? 'Richtig!' : 'Leider falsch'} · ${sgn(mine.change)}</div>
+    ${mine.bonus ? `<div class="hint">inkl. Han-Solo-Bonus ${mine.bonus}</div>` : ''}</div></div>` : '';
+  const required = m && m.required;
   const waiting = S.players.filter(p => p.required && !p.is_ready).length;
-  const btn = isTV() ? '' : required
-    ? `<button class="${M.is_ready ? '' : 'primary'}" style="width:100%;padding:14px" onclick="A.ready(${M.is_ready ? 'false' : 'true'})">${M.is_ready ? 'Warte … (zurücknehmen)' : 'Weiter'}</button>`
-    : '<p class="muted">Du hast 0 Punkte und musst nicht auf „Weiter“ drücken – du kannst trotzdem zuschauen.</p>';
-  const body = `<div class="qtext">${esc(q.text)}</div>${answerList('reveal')}
-    ${rv.explanation ? `<p class="muted">💡 ${esc(rv.explanation)}</p>` : ''}${own}
-    <h3>Ergebnisse</h3>${resultsTable()}<h3>Rangliste</h3>${rankingTable()}`;
-  const wait = `<p class="muted">Warten auf ${`<span id="waiting">${waiting}</span>`} Spieler${S.ready_deadline ? ' · automatisch weiter in <span id="timer"></span>' : ''}</p>`;
-  if (isTV()) return `<div class="bar"><span>Auflösung ${S.progress.done} / ${S.progress.total}</span><span></span></div>${body}${wait}${adminBox()}`;
-  return `<div class="bar"><span>Auflösung ${S.progress.done} / ${S.progress.total}</span><span>${M.points} Punkte</span></div>${body}${btn}${wait}${adminBox()}`;
+  const action = tv ? `<div class="hint" style="text-align:center;width:100%">Warten auf <span id="waiting">${waiting}</span> Spieler</div>`
+    : required ? `<button class="btn ${M.is_ready ? 'ghost' : ''}" onclick="A.ready(${M.is_ready ? 'false' : 'true'})">${M.is_ready ? 'Warte … (zurücknehmen)' : 'Weiter'}</button><div class="hint" style="text-align:center">Warten auf <span id="waiting">${waiting}</span> Spieler</div>`
+    : '<div class="note">Du hast 0 Punkte und musst nicht auf „Weiter“ drücken – du kannst trotzdem zuschauen.</div>';
+  return `<div class="screen">${hero}<div class="sheet">${answerList('reveal')}${rv.explanation ? `<div class="note">💡 ${esc(rv.explanation)}</div>` : ''}${tv ? '' : banner}
+    <div><h3 class="f">Rangliste</h3>${rankRows()}</div><div class="grow"></div><div class="actions">${action}</div></div>${menuView()}</div>`;
 }
 
 function finishedView() {
-  const f = S.final;
+  const f = S.final, win = f.filter(p => p.rank === 1), w = win[0];
   const tl = a => a.map(x => (x > 0 ? '+' : '') + x).join(' ');
-  return `<h1>Spiel beendet</h1>${S.final.length && S.final[0].rank === 1 ? `<h2>🏆 ${f.filter(p => p.rank === 1).map(p => esc(p.nickname)).join(' &amp; ')}</h2>` : ''}
-  <table><thead><tr><th class="num">#</th><th>Spieler</th><th class="num">Punkte</th><th class="num">Richtig</th></tr></thead><tbody>${f.map(p => `
-    <tr class="${ID && p.player_id === ID.playerId ? 'me' : ''}"><td class="num">${p.rank}</td><td>${esc(p.nickname)}</td><td class="num">${p.points}</td><td class="num">${p.correct}/${p.answered}</td></tr>`).join('')}</tbody></table>
-  <details><summary>Details</summary><table><thead><tr><th>Spieler</th><th class="num">Bester Gewinn</th><th class="num">Größter Verlust</th><th class="num">Joker</th></tr></thead><tbody>${f.map(p => `
-    <tr><td>${esc(p.nickname)}</td><td class="num">${p.best_win ?? '–'}</td><td class="num">${p.worst_loss ?? '–'}</td><td class="num">${p.jokers_used}</td></tr>
-    <tr><td colspan="4" class="muted">Verlauf: ${tl(p.timeline)}</td></tr>`).join('')}</tbody></table></details>
-  <div class="row" style="margin-top:14px"><button class="primary" onclick="leave()">Zur Startseite</button></div>`;
+  const hero = `<div class="hero">${topbar('Spiel beendet')}<div class="winner">${w ? `<div class="sub" style="margin-top:10px">🏆 Sieger</div>${avFull(w.avatar)}<div class="name">${win.map(p => esc(p.nickname)).join(' &amp; ')}</div><div class="pts">${w.points} Punkte</div>` : ''}</div></div>`;
+  return `<div class="screen">${hero}<div class="sheet"><div class="rows">${f.map(p => `<div class="row ${ID && p.player_id === ID.playerId ? 'me' : ''}"><span class="rk">${p.rank}</span>${av(p.avatar, 46)}
+    <div class="nm">${esc(p.nickname)}<small>${p.correct} von ${p.answered} richtig</small></div><div class="pts">${p.points}</div></div>`).join('')}</div>
+    <details class="set"><summary>Details</summary>${f.map(p => `<div style="padding:8px 0;border-top:1px solid var(--line)"><b>${esc(p.nickname)}</b>
+      <div class="hint">Bester Gewinn ${p.best_win ?? '–'} · Größter Verlust ${p.worst_loss ?? '–'} · Joker ${p.jokers_used}</div><div class="hint">Verlauf: ${tl(p.timeline)}</div></div>`).join('')}</details>
+    <div class="grow"></div><div class="actions"><button class="btn" onclick="leave()">Zur Startseite</button></div></div></div>`;
 }
 
 /* ---------- Rendering ---------- */
 function viewKey() {
-  if (!ID || !S) return 'home';
-  const st = S.status;
-  if (st === 'lobby') return 'lobby' + JSON.stringify(S.players.map(p => [p.id, p.nickname, p.is_ready])) + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players;
-  if (st === 'question_active') return 'q' + S.question.sq_id + (M ? (M.submission ? 's' : 'o') + M.points + JSON.stringify(M.jokers_this_question) + JSON.stringify(M.jokers_left) : 'tv') + ui.confirm;
-  if (st === 'reveal') return 'r' + S.question.sq_id + (M ? M.is_ready : '') + ui.confirm + (S.question ? S.players.length : 0);
+  if (!ID || !S) return 'home' + ui.step + ui.mode + ui.avatar + ui.taken.join() + (pool ? pool.active : '');
+  const st = S.status, ex = '|' + ui.menu + ui.confirm;
+  if (st === 'lobby') return 'lobby' + JSON.stringify(S.players.map(p => [p.id, p.nickname, p.avatar, p.is_ready])) + isAdmin() + (M ? M.is_ready : '') + S.settings.min_players + ex;
+  if (st === 'question_active') return 'q' + S.question.sq_id + (M ? (M.submission ? 's' : 'o') + M.points + JSON.stringify(M.jokers_this_question) + JSON.stringify(M.jokers_left) : 'tv') + ex;
+  if (st === 'reveal') return 'r' + S.question.sq_id + (M ? M.is_ready : '') + S.players.length + ex;
   return 'f' + st;
 }
 function render(force) {
   const key = viewKey();
   if (key === lastKey && !force) return live();
+  const a = document.activeElement, keep = a && a.id && a.tagName === 'INPUT' ? { id: a.id, pos: a.selectionStart } : null;
   lastKey = key;
   document.body.classList.toggle('tv', !!isTV());
-  document.title = S && S.status !== 'finished' ? `Quiz ${S.code}` : 'Quiz';
+  document.title = S && ID && S.status !== 'finished' ? `${APP_NAME} ${S.code}` : APP_NAME;
   const app = $('#app');
-  if (!ID || !S) { app.innerHTML = homeView(); if (!pool) loadPool(); return; }
-  app.innerHTML = { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
+  if (!ID || !S) { app.innerHTML = homeView(); if (!pool) loadPool(); }
+  else app.innerHTML = { lobby: lobbyView, question_active: questionView, reveal: revealView, finished: finishedView }[S.status]();
+  if (keep) { const e = document.getElementById(keep.id); if (e) { e.focus(); try { e.setSelectionRange(keep.pos, keep.pos); } catch {} } }
   live();
 }
 function live() {   // kleine Änderungen ohne komplettes Neuzeichnen (Eingaben bleiben erhalten)
   if (!S) return;
-  const a = $('#answered');
-  if (a && S.status === 'question_active') { const req = S.players.filter(p => p.required), d = req.filter(p => p.answered); a.textContent = `${d.length} / ${req.length}`; }
-  document.querySelectorAll('[data-pa]').forEach(e => { const p = S.players.find(x => x.id === e.dataset.pa); if (p) e.textContent = p.required ? (p.answered ? '✅' : '…') : '0 Punkte'; });
+  const a = $('#answered'); if (a && S.status === 'question_active') a.textContent = answeredCount();
+  document.querySelectorAll('[data-pa]').forEach(e => { const p = pl(e.dataset.pa); if (p && p.answered && !e.querySelector('.ok')) e.querySelector('.av').insertAdjacentHTML('beforeend', '<span class="ok">✓</span>'); });
   const w = $('#waiting'); if (w) w.textContent = S.players.filter(p => p.required && !p.is_ready).length;
 }
-async function loadPool() { try { pool = await rpc('quiz_pool_info'); if (!ID) render(true); } catch {} }
-function resume() { const l = loadLast(); if (l) { ID = l; save(); startSync(); } }
+async function loadPool() { try { pool = await rpc('quiz_pool_info'); if (!ID) { lastKey = ''; render(); } } catch {} }
 
 /* ---------- Start ---------- */
 (function init() {
   if (!CFG.url || CFG.url.includes('DEIN-PROJEKT')) {
-    $('#app').innerHTML = '<h1>Quiz</h1><div class="card"><b>Nicht konfiguriert.</b><p>Bitte in <code>config.js</code> die Supabase-URL und den anon-Key eintragen (siehe SETUP.md).</p></div>';
+    $('#app').innerHTML = '<div class="screen"><div class="hero"><h1 class="q">Nicht konfiguriert</h1></div><div class="sheet"><p>Bitte in <code>config.js</code> die Supabase-URL und den anon-Key eintragen (siehe SETUP.md).</p></div></div>';
     return;
   }
   ID = loadId();
-  const urlCode = new URLSearchParams(location.search).get('code');
-  if (!ID && !urlCode) {            // frischer Tab ohne Link: letzte Runde nur anbieten (Button „Fortsetzen“)
-    ID = null;
-  }
   if (ID) { if (ID.role === 'tv') document.body.classList.add('tv'); startSync(); }
   render(true);
 })();
